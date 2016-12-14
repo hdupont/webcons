@@ -80,8 +80,7 @@ ns_wcons.CommandApi = (function(CommandExitException) {
  */
 ns_wcons.Command = (function(CommandApi, CommandExitException) {
 	
-	// TODO supprimer le paramètre isInteractive
-	function Command(name, handler, isInteractive) {
+	function Command(name, handler) {
 		this._name = name;
 		this._handler = handler;
 		this._args = null;
@@ -118,9 +117,6 @@ ns_wcons.Command = (function(CommandApi, CommandExitException) {
 	};
 	Command.prototype.getIntroduction = function(inputString) {
 		return getOption(this, "description");
-	};
-	Command.prototype.isInteractive = function(inputString) {
-		return this._isInteractive;
 	};
 	Command.prototype.quitted = function() {
 		return this._quitted;
