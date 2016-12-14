@@ -66,22 +66,6 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 })(ns_wcons.CommandExitException);
 
 /**
- * defaultInlineCommands est la liste des commandes chargées par défaut dans la
- * console. 
- */
-ns_wcons.defaultInlineCommands = (function() {
-	var defCmds = this;
-	return {
-		"echo": function(api) {
-			api.println(api.inlineCmdArgsString());
-		},
-		"wtf": function(api) {
-			return api.println(api.args() + "... WTF?!");
-		}
-	};
-})();
-
-/**
  * --------------
  * @class Command
  * --------------
@@ -224,13 +208,8 @@ ns_wcons.InteractiveCommand = (function(Command) {
  */
 ns_wcons.Commands = (function(InlineCommand, InteractiveCommand) {
 	
-	function Commands(defaultInlineCommands) {
+	function Commands() {
 		this._commands = [];
-		
-		var self = this;
-		for (var cmdName in defaultInlineCommands) {
-			self.add(cmdName, defaultInlineCommands[cmdName]);
-		}
 	}
 	Commands.prototype.add = function(name, handler) {
 		var inlineCmd = new InlineCommand(name, handler);
@@ -556,14 +535,14 @@ ns_wcons.Input = (function(parseTk) {
  * Une Console est un simulacre de console dans laquelle l'utilisateur peut
  * exécuter des commandes.
  */
-ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi, defaultInlineCommands) {
+ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 	
 	// public
 	// ------
 
 	function Console(ioLine) {
 		this._domElt = null; // Un singleton.
-		this._commands = new Commands(defaultInlineCommands);
+		this._commands = new Commands();
 		this._interactiveCommands = new Commands();
 		this._currentCommand = null;
 		this._currentInteractiveCommand = null;
@@ -625,13 +604,6 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi, defaultInlin
 		names = names.substring(0, names.length - 2);
 		
 		return names;
-	};
-	Console.prototype.loadDefaultInlineCommands = function() {
-		var self = this;
-		
-		for (var cmdName in defaultInlineCommands) {
-			this.addInlineCommand(cmdName, defaultInlineCommands[cmdName]);
-		}
 	};
 	
 	// private
@@ -721,7 +693,7 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi, defaultInlin
 	}
 
 	return Console;
-})(ns_wcons.Input, h_keyboardtk, ns_wcons.Commands, ns_wcons.CommandApi, ns_wcons.defaultInlineCommands);
+})(ns_wcons.Input, h_keyboardtk, ns_wcons.Commands, ns_wcons.CommandApi);
 
 // API
 // TODO faire que ns_wcons utilise webconns, avec ns = namespace pour plus de clareté.
