@@ -30,10 +30,11 @@ ns_wcons.CommandExitException = (function() {
  */
 ns_wcons.CommandApi = (function(CommandExitException) {
 	
-	function CommandApi(cmd, input, ioLine) {
+	function CommandApi(cmd, input, ioLine, cmdNames) {
 		this._cmd = cmd;
 		this._input = input;
 		this._ioLine = ioLine;
+		this._cmdNames = cmdNames;
 	}
 	CommandApi.prototype.print = function(cmdOutput) {
 		this._ioLine.print(cmdOutput);
@@ -62,6 +63,9 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 	CommandApi.prototype.printPrompt = function() {
 		this._ioLine.printPrompt(this._cmd.getPrompt());
 	}
+	CommandApi.prototype.cmdNames = function() {
+		return this._cmdNames;
+	}
 	return CommandApi;
 })(ns_wcons.CommandExitException);
 
@@ -88,20 +92,20 @@ ns_wcons.Command = (function(CommandApi, CommandExitException) {
 		return this._name;
 	};
 	// L'input qui a déclenché l'appelle et la ligne permettant les affichages.
-	Command.prototype.onInput = function(input, ioLine) {
-		var api = new CommandApi(this, input, ioLine);
-		try {
+	Command.prototype.onInput = function(input, ioLine, cmdNames) {
+		var api = new CommandApi(this, input, ioLine, cmdNames);
+//		try {
 			this.execute(api);
-		}
-		catch(e) {
-			if (e instanceof CommandExitException) {
-				this._quitted = true;
-				console.log(e);
-			}
-			else {
-				throw e;
-			}
-		}
+//		}
+//		catch(e) {
+//			if (e instanceof CommandExitException) {
+//				this._quitted = true;
+//				console.log(e);
+//			}
+//			else {
+//				throw e;
+//			}
+//		}
 	};
 	Command.prototype.execute = function(api) {
 		this._handler(api);
@@ -549,6 +553,9 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 		}
 
 		this._domElt = buildJConsoleDomElt(this);
+		
+		addIntro(this);
+		
 		this._ioLine.appendTo(this._domElt);
 		
 		addKeyboadListener(this);
@@ -616,6 +623,12 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 		
 		return outputElt;
 	}
+	function addIntro(self) {
+		var sortedCmds = self._commands.getNamesSorted();
+		var sortedCmdsStr = sortedCmds.join(", ");
+		var helpNode = document.createTextNode("Tapez \"help\" (sans les guillemets) pour avoir de l'aide :)");
+		self._domElt.appendChild(helpNode);
+	}
 	function addKeyboadListener(that) {
 		that._domElt.addEventListener("keydown", function(event) {
 			if (keyboard.isVisibleChar(event.keyCode, event.key) || keyboard.isSpace(event.keyCode)) {
@@ -657,7 +670,7 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 				
 				// C'est la commande qui fait ses output.
 				// Elle prend la main sur la ioLine.
-				loadedCommand.onInput(input, that._ioLine);
+				loadedCommand.onInput(input, that._ioLine, that._commands.getNamesSorted());
 				
 				if (loadedCommand.quitted()) {
 					that._currentInteractiveCommand = null;
