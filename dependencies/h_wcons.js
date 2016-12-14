@@ -246,14 +246,6 @@ ns_wcons.Commands = (function(InlineCommand, InteractiveCommand) {
 	return Commands;
 })(ns_wcons.InlineCommand, ns_wcons.InteractiveCommand);
 
-ns_wcons.CommandInterpreter = (function() {
-	function CommandInterpreter(name, handler) {
-		Command.call(this, name, handler);
-	}
-	
-	return CommandInterpreter
-})();
-
 /**
  * ----------------
  * @class Character
