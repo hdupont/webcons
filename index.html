@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"> 
+<title>webcons</title>
+</head>
+<body>
+
+<main>
+	<div id="calcapp"></div>
+</main>
+
+<!-- Bibliothèques tierces -->
+<script src=dependencies/h_keyboardtk.js></script> <!-- Boite à outils de gesion du clavier -->
+<script src=dependencies/h_parsetk.js></script> <!-- Boite à outils de parsing -->
+<script src=dependencies/h_wcons.js></script> <!-- Un simulacre de console (web) -->
+<script src=dependencies/h_oneopcalculator.js></script> <!-- Un simulacre de console -->
+
+<!-- Le namespace de l'application -->
+<script src=src/main/javascript/ns_wconsapp.js></script>
+
+<!-- Les composants de l'application -->
+
+<!-- Les commandes -->
+<script src=src/main/javascript/cmds/cmds.js></script>
+
+<!-- Les commandes interactives -->
+<script src=src/main/javascript/cmds/interactive/interactive.js></script>
+<script src=src/main/javascript/cmds/interactive/calci.js></script>
+
+<!-- Les commandes en lignes -->
+<script src=src/main/javascript/cmds/inline/inline.js></script>
+<script src=src/main/javascript/cmds/inline/calc.js></script>
+
+<!-- Les helpers des commandes -->
+<script src=src/main/javascript/cmds/helpers/helpers.js></script>
+<script src=src/main/javascript/cmds/helpers/calcExpr.js></script>
+
+<!-- main -->
+<script src=src/main/javascript/main.js></script>
+
+</body>
+</html>
