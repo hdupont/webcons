@@ -5,22 +5,6 @@
 var ns_wcons = {};
 
 /**
- * ---------------------------
- * @class CommandExitException
- * ---------------------------
- * CommandExitException est l'exception permettant de quitter une
- * commande.
- */
-ns_wcons.CommandExitException = (function() {
-	
-	function CommandExitException(message) {
-	    this.message = message;
-	}
-	
-	return CommandExitException;
-})();
-
-/**
  * -----------------
  * @class CommandApi
  * -----------------
@@ -66,6 +50,8 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 	CommandApi.prototype.cmdNames = function() {
 		return this._cmdNames;
 	}
+	CommandApi.prototype.quit = "quit";
+	
 	return CommandApi;
 })(ns_wcons.CommandExitException);
 
@@ -93,21 +79,24 @@ ns_wcons.Command = (function(CommandApi, CommandExitException) {
 	// L'input qui a déclenché l'appelle et la ligne permettant les affichages.
 	Command.prototype.onInput = function(input, ioLine, cmdNames) {
 		var api = new CommandApi(this, input, ioLine, cmdNames);
-//		try {
-			this.execute(api);
-//		}
-//		catch(e) {
-//			if (e instanceof CommandExitException) {
-//				this._quitted = true;
-//				console.log(e);
-//			}
-//			else {
-//				throw e;
-//			}
-//		}
+		var cmdReturn = this.executeHandler(api);
+		if (cmdReturn === api.quit) {
+			this._quitted = true;
+		}
+		else {
+			this.postReturnCheck(api);
+		}
 	};
-	Command.prototype.execute = function(api) {
-		this._handler(api);
+	Command.prototype.executeHandler = function(api) {
+		var cmdReturn = this._handler(api);		
+	};
+	/**
+	 * Rien par défaut.
+	 * A coder spécifiquement pour les commandes en ayant besoin.
+	 * Par exemple pour les commandes interactive.
+	 */
+	Command.prototype.postReturnCheck = function(api) {
+		// Rien 		
 	};
 	Command.prototype.setArgs = function(args) {
 		return this._args = args;
@@ -176,7 +165,7 @@ ns_wcons.InteractiveCommand = (function(Command) {
 	InteractiveCommand.prototype.getPrompt = function(api) {
 		return this.getName() + "> ";
 	};
-	InteractiveCommand.prototype.execute = function(api) {
+	InteractiveCommand.prototype.executeHandler = function(api) {
 		// Si c'est la première exécution, on affiche le message de bienvenue
 		// et on s'en retourne.
 		if (this._isFirstExecution || this._quitted) {
@@ -187,8 +176,10 @@ ns_wcons.InteractiveCommand = (function(Command) {
 			return;
 		}
 		
-		this._handler(api);
-		api.print(this.getPrompt());
+		return this._handler(api);
+	};
+	InteractiveCommand.prototype.postReturnCheck = function(api) {
+		api.print(this.getPrompt());	
 	};
 	InteractiveCommand.prototype.getCmdArgsString = function(input) {
 		return input.getInputString();
