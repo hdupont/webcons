@@ -51,13 +51,15 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 	
 	/**
 	 * Construit une API utilisable par une commande.
-	 * @property {object} _cmd La commande pour laquelle cette API est définie.
-	 * @property {object} _input L'entrée utilisateur qui a lancé la commande
+	 * @property {Command} _cmd La commande pour laquelle cette API est définie.
+	 * @property {Input} _input L'entrée utilisateur qui a lancé la commande
 	 * pour laquelle cette API est définie.
-	 * @property {object} _ioLine L'objet permettant d'effectuer des affichages
+	 * @property {IoLine} _ioLine L'objet permettant d'effectuer des affichages
 	 * à la commande pour laquelle on définit cette API.
-	 * @property {object} _helpCmd La commande d'aide de la commande pour
+	 * @property {Command} _helpCmd La commande d'aide de la commande pour
 	 * laquelle on définit cette API.
+	 * 
+	 * NOTE Une API est créée à chaque appel de commande.
 	 */
 	function CommandApi(cmd, input, ioLine, helpCmd) {
 		this._cmd = cmd;
@@ -65,18 +67,50 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 		this._ioLine = ioLine;
 		this._helpCmd = helpCmd;
 	}
-	CommandApi.prototype.print = function(cmdOutput) {
-		this._ioLine.print(cmdOutput);
+	
+	/**
+	 * Affiche dans la console la chaine passée en paramètre.
+	 * @param {string} str La chaine qu'on souhaite afficher dans la console.
+	 */
+	CommandApi.prototype.print = function(str) {
+		this._ioLine.print(str);
 	};
+	
+	/**
+	 * Affiche dans la console la chaine passée en paramètre puis passe à la
+	 * ligne suivante.
+	 * @param {string} str La chaine qu'on souhaite afficher dans la console.
+	 */
 	CommandApi.prototype.println = function(cmdOutput) {
 		this._ioLine.println(cmdOutput);
 	};
-	CommandApi.prototype.input = function() {
-		return this._input;
-	};
+	
+	/**
+	 * Retourne sous la forme d'un objet Input l'entrée utilisateur qui a
+	 * déclenché l'exécution de la commande pour laquelle cette API a été
+	 * définie.
+	 * @returns {Input} L'input correspondant à l'entrée utilisateur qui a
+	 * déclenchée l'exécution de la commande pour laquelle cette API a été
+	 * définie.
+	 */
+//	CommandApi.prototype.input = function() {
+//		return this._input;
+//	};
+	
+	/**
+	 * Retourne sous la forme d'une chaine l'entrée utilisateur qui a déclenché
+	 * l'exécution de la commande pour laquelle cette API a été définie.
+	 * @returns {String} La chaine correspondant à l'entrée utilisateur qui a
+	 * déclenchée l'exécution de la commande pour laquelle cette API a été
+	 * définie.
+	 */
 	CommandApi.prototype.inputString = function() {
 		return this._input.toString();
 	};
+	
+	/**
+	 * Retourne la chaine
+	 */
 	CommandApi.prototype.args = function() {
 		// On saute le premier token qui est le prompt, d'où le 1.
 		return this._input.peekAfterToken(1);
@@ -236,9 +270,6 @@ ns_wcons.InteractiveCommand = (function(Command) {
 	};
 	InteractiveCommand.prototype.postReturnCheck = function(api) {
 		api.print(this.getPrompt());	
-	};
-	InteractiveCommand.prototype.getCmdArgsString = function(input) {
-		return input.getInputString();
 	};
 	
 	return InteractiveCommand;
