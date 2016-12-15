@@ -695,7 +695,6 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 				if (loadedCommand.quitted()) {
 					that._currentInteractiveCommand = null;
 					var cmdApi = new CommandApi(null, input, that._ioLine);
-					cmdApi.println(loadedCommand.getName() + " quitted...");
 					that.printPrompt();
 				}
 			}
