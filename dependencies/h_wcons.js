@@ -729,7 +729,10 @@ var h_wcons = (function(Console, IoLine) {
 		}
 	}
 })(ns_wcons.Console, ns_wcons.IoLine);
-
+// TODO Si pas de helpTarget appeler le help qui liste les commandes
+// TODO faire que skipSpaces ne lève plus d'exception.
+// TODO sur problème avec des arguments afficher l'aide.
+// TODO Gestion des erreurs à la C avec return et un check du return.
 // TODO Ajouter une commande lorem qui retourne Lorem ipsum...  
 // TODO Ajouter une commande "ascii" qui retourne le tableau ascii et
 // <code>ascii x</code>
