@@ -684,7 +684,7 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 							// On gère le cas où la commande n'a pas d'aide.
 							if (typeof loadedCommand === "undefined" || loadedCommand === null) {
 								// On va exécuter nohelp.
-								loadedCommand = that._helpCommands.get("nohelp");
+								loadedCommand = that._commands.get("nohelp");
 							}	
 						}
 					}
