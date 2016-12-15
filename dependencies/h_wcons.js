@@ -49,6 +49,16 @@ var ns_wcons = {};
  */
 ns_wcons.CommandApi = (function(CommandExitException) {
 	
+	/**
+	 * Construit une API utilisable par une commande.
+	 * @property {object} _cmd La commande pour laquelle cette API est définie.
+	 * @property {object} _input L'entrée utilisateur qui a lancé la commande
+	 * pour laquelle cette API est définie.
+	 * @property {object} _ioLine L'objet permettant d'effectuer des affichages
+	 * à la commande pour laquelle on définit cette API.
+	 * @property {object} _helpCmd La commande d'aide de la commande pour
+	 * laquelle on définit cette API.
+	 */
 	function CommandApi(cmd, input, ioLine, helpCmd) {
 		this._cmd = cmd;
 		this._input = input;
