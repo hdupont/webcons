@@ -1,6 +1,6 @@
-// Cette commande est géré directement par la console. On ne définit ici que
-// l'aide.
-
+/**
+ * Commande help sans argument de la console.
+ */
 ns_wconsapp.cmds.inline.help = function(api) {
 	var firstCmdUnderstood = api.inputString().split(", ")[0]
 	api.println("Description:");
