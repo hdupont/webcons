@@ -20,6 +20,7 @@ ns_wconsapp.cmds.help.calc = function(api) {
 	api.println("    nombre: un nombre...");
 	api.println("Note:");
 	api.println("    Les espaces sont facultatifs entre l'opérateur et ses opérandes.");
-	api.println("Exemple d'utilisation:");
-	api.println("    calc 2 * 3");
+	api.println("Exemples d'utilisation:");
+	api.println("    calc 2+3");
+	api.println("    calc 4 * 5");
 }
