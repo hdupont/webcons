@@ -11,4 +11,8 @@
 		cons.addInlineCommand(cmdName, cmds.inline[cmdName]);
 	}
 
+	for (var cmdName in cmds.help) {
+		cons.addHelpCommand(cmdName, cmds.help[cmdName]);
+	}
+	
 })(ns_wconsapp.cmds, h_wcons);

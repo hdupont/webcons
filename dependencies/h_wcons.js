@@ -536,6 +536,7 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 		this._domElt = null; // Un singleton.
 		this._commands = new Commands();
 		this._interactiveCommands = new Commands();
+		this._helpCommands = new Commands();
 		this._currentCommand = null;
 		this._currentInteractiveCommand = null;
 		this._prompt = "wc>";
@@ -581,6 +582,9 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 	};
 	Console.prototype.addInteractiveCommand = function(name, handler) {
 		this._interactiveCommands.addInteractiveCommand(name, handler);
+	};
+	Console.prototype.addHelpCommand = function(name, handler) {
+		this._helpCommands.add(name, handler);
 	};
 	Console.prototype.isInlineCmd = function(name) {
 		var cmd = this._commands.get(name)
@@ -650,7 +654,11 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 				
 				// Pas de commande en cours. On essaie de charger une commande (interactive ou en ligne).
 				if (loadedCommand === null) {
-					if (that.isInlineCmd(cmdName)) {
+					if (cmdName === "help") {
+						var helpTarget = input.findToken(2, that._prompt.length);
+						loadedCommand = that._helpCommands.get(helpTarget);
+					}
+					else if (that.isInlineCmd(cmdName)) {
 						loadedCommand = that._commands.get(cmdName);
 					}
 					else if (that.isInteractiveCmd(cmdName)) {
