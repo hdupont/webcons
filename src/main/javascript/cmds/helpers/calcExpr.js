@@ -11,7 +11,8 @@ ns_wconsapp.helpers.calcExpr = (function(OneOpCalculator) {
 			var exprRegExp = /(.+)(\+|\-|\*|\/)(.+)/;
 			var match = exprRegExp.exec(exprStr);
 			if (match === null) {
-				throw new Error("Expression non reconnue: " + exprStr);
+				var errorMsg = "Expression non reconnue"
+				throw new Error(errorMsg + (exprStr ===  "" ? "" : (": " + exprStr)));
 			}
 
 			match = match.map(function(exprPart) {
@@ -34,19 +35,15 @@ ns_wconsapp.helpers.calcExpr = (function(OneOpCalculator) {
 				return num;
 			}
 		}
-		
+
+		// On laisse l'appelant gérer l'exception.
 		var res = "";
 		var calculator = new OneOpCalculator();
-		try {
-			var exprComponents = parseExpression(exprStr)
-			var operand1 = parseNum(exprComponents[0]);
-			var operand2 = parseNum(exprComponents[2]);
-			var operator = exprComponents[1];
-			res = calculator.calculate(operand1, operator, operand2)
-		}
-		catch(e) {
-			res = e;
-		}
+		var exprComponents = parseExpression(exprStr)
+		var operand1 = parseNum(exprComponents[0]);
+		var operand2 = parseNum(exprComponents[2]);
+		var operator = exprComponents[1];
+		res = calculator.calculate(operand1, operator, operand2)
 
 		return "" + res;
 	};

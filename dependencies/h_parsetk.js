@@ -14,7 +14,7 @@ var h_parsetk = (function() {
 		 */
 		skipSpaces: function(str, start) {
 			if (start > str.length - 1) {
-				throw new Error("skipSpaces - start > str.length - 1");
+				return -1;
 			}
 			var index = start;
 			while (str[index] === " " && index < str.length) {
@@ -35,7 +35,7 @@ var h_parsetk = (function() {
 		 */
 		skipNonSpaces: function(str, start) {
 			if (start > str.length - 1) {
-				throw new Error("skipNonSpaces - start > str.length - 1");
+				return -1;
 			}
 			var index = start;
 			while (str[index] !== " " && index < str.length) {
@@ -54,7 +54,7 @@ var h_parsetk = (function() {
 		 */
 		peekToken: function(str, start) {
 			if (start > str.length - 1) {
-				throw new Error("peekToken - start > str.length - 1");
+				"";
 			}
 			var index = start;
 			this.skipSpaces(str, index);
@@ -79,6 +79,9 @@ var h_parsetk = (function() {
 		 * TODO Uniformiser l'interface. Tout le monde commence à 1 ou à zéro.
 		 */
 		findTokenIndex: function(str, index, start) {
+			if (start > str.length - 1) {
+				return -1;
+			}
 			var nonSpace = start;
 			var space = start;
 			for(var i = 0; i < index; i++) {
@@ -112,7 +115,13 @@ var h_parsetk = (function() {
 		 * TODO Uniformiser l'interface. Tout le monde commence à 1 ou à zéro.
 		 */
 		findToken: function(str, index, start) {
+			if (start > str.length - 1) {
+				return "";
+			}
 			var firstTokenCharIndex = this.findTokenIndex(str, index, start);
+			if (firstTokenCharIndex === -1) {
+				return "";
+			}
 			var token = this.peekToken(str, firstTokenCharIndex);
 			return token;
 		},
@@ -134,7 +143,13 @@ var h_parsetk = (function() {
 		 * => "dolor sit amet"
 		 */
 		peekAfterToken: function(str, index) {
+			if (str === "") {
+				return "";
+			}
 			var firstTokenCharIndex = this.findTokenIndex(str, index + 1, 0);
+			if (firstTokenCharIndex === -1) {
+				return "";
+			}
 			return str.slice(firstTokenCharIndex);
 		}
 	};

@@ -14,11 +14,11 @@ var ns_wcons = {};
  */
 ns_wcons.CommandApi = (function(CommandExitException) {
 	
-	function CommandApi(cmd, input, ioLine, cmdNames) {
+	function CommandApi(cmd, input, ioLine, helpCmd) {
 		this._cmd = cmd;
 		this._input = input;
 		this._ioLine = ioLine;
-		this._cmdNames = cmdNames;
+		this._helpCmd = helpCmd;
 	}
 	CommandApi.prototype.print = function(cmdOutput) {
 		this._ioLine.print(cmdOutput);
@@ -28,6 +28,9 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 	};
 	CommandApi.prototype.input = function() {
 		return this._input;
+	};
+	CommandApi.prototype.inputString = function() {
+		return this._input.toString();
 	};
 	CommandApi.prototype.args = function() {
 		// On saute le premier token qui est le prompt, d'où le 1.
@@ -47,8 +50,16 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 	CommandApi.prototype.printPrompt = function() {
 		this._ioLine.printPrompt(this._cmd.getPrompt());
 	}
-	CommandApi.prototype.cmdNames = function() {
-		return this._cmdNames;
+	CommandApi.prototype.printHelp = function() {
+		if (typeof this._helpCmd !== "undefined") {
+			this._helpCmd.executeHandler(this);
+		}
+		else {
+			this._ioLine.println("No help to give :(");
+		}
+	}
+	CommandApi.prototype.cmdName = function() {
+		return this._cmd.getName();
 	}
 	CommandApi.prototype.quit = "quit";
 	
@@ -77,8 +88,8 @@ ns_wcons.Command = (function(CommandApi, CommandExitException) {
 		return this._name;
 	};
 	// L'input qui a déclenché l'appelle et la ligne permettant les affichages.
-	Command.prototype.onInput = function(input, ioLine, cmdNames) {
-		var api = new CommandApi(this, input, ioLine, cmdNames);
+	Command.prototype.onInput = function(input, ioLine, helpCmd) {
+		var api = new CommandApi(this, input, ioLine, helpCmd);
 		var cmdReturn = this.executeHandler(api);
 		if (cmdReturn === api.quit) {
 			this._quitted = true;
@@ -582,6 +593,9 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 		var cmd = this._interactiveCommands.get(name);
 		return cmd;
 	};
+	Console.prototype.printConsoleHelp = function(ioLine) {
+		ioLine.println("Commandes comprises:...")
+	};
 	Console.prototype.findSortedCommandsNames = function(name, handler) {
 		var sortedNames = this._commands.getNamesSorted();
 		var names = "";
@@ -642,13 +656,30 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 				
 				// Pas de commande en cours. On essaie de charger une commande (interactive ou en ligne).
 				if (loadedCommand === null) {
+					// C'est une demande d'aide.
 					if (cmdName === "help") {
 						var helpTarget = input.findToken(2, that._prompt.length);
-						loadedCommand = that._helpCommands.get(helpTarget);
+						
+						// C'est l'aide générale.
+						if (helpTarget === "") {
+							loadedCommand = that._helpCommands.get("wconshelp");
+							input = new Input(that.findSortedCommandsNames());
+						}
+						// C'est une aide pour une commande spécifique.
+						else {
+							loadedCommand = that._helpCommands.get(helpTarget);
+							
+							// Si on n'a pas trouvé l'aide demandée on charge nohelp.
+							if (typeof loadedCommand === "undefined" || loadedCommand === null) {
+								loadedCommand = that._helpCommands.get("nohelp");
+							}	
+						}
 					}
+					// C'est une commande en ligne.
 					else if (that.isInlineCmd(cmdName)) {
 						loadedCommand = that._commands.get(cmdName);
 					}
+					// C'est une commande interactive.
 					else if (that.isInteractiveCmd(cmdName)) {
 						loadedCommand = that._interactiveCommands.get(cmdName);
 						that._currentInteractiveCommand = loadedCommand;
@@ -662,7 +693,7 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 				
 				// C'est la commande qui fait ses output.
 				// Elle prend la main sur la ioLine.
-				loadedCommand.onInput(input, that._ioLine, that._commands.getNamesSorted());
+				loadedCommand.onInput(input, that._ioLine, that._helpCommands.get(cmdName));
 				
 				if (loadedCommand.quitted()) {
 					that._currentInteractiveCommand = null;
@@ -717,6 +748,7 @@ var h_wcons = (function(Console, IoLine) {
 		}
 	}
 })(ns_wcons.Console, ns_wcons.IoLine);
+// TODO Supprimer cmdNames
 // TODO Si pas de helpTarget appeler le help qui liste les commandes
 // TODO faire que skipSpaces ne lève plus d'exception.
 // TODO sur problème avec des arguments afficher l'aide.
