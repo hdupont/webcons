@@ -112,10 +112,7 @@ ns_wcons.Command = (function(CommandApi, CommandExitException) {
 	Command.prototype.setArgs = function(args) {
 		return this._args = args;
 	};
-	Command.prototype.setInputString = function(inputString) {
-		this._inputString = inputString;
-	};
-	Command.prototype.getIntroduction = function(inputString) {
+	Command.prototype.getIntroduction = function() {
 		return getOption(this, "description");
 	};
 	Command.prototype.quitted = function() {
