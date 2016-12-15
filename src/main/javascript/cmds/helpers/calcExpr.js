@@ -1,12 +1,29 @@
 ns_wconsapp.helpers.calcExpr = (function(OneOpCalculator) {
 	
 	/**
+	 * Effectue le calcul représenté par l'expression passée en paramètres.
+	 * L'expression attendue est de la forme:
+	 *     <nombre><opérateur><nombre>
 	 * 
-	 * @param {string} expr La string représentant le calcul a effectuer.
-	 * @returns
+	 * EXAMPLE
+	 * calcExpr("2*3") => 6
+	 * calcExpr("2 +3") => 5
+	 * @param {string} expr L'expression à évaluer.
+	 * @returns {number} Le résultat de l'évaluation.
+	 * @throws {Error} Si la chaine passé en paramètre ne représente pas une
+	 * expression valide.
 	 */
-	return function(exprStr) {
+	return function calcExpr(exprStr) {
 		
+		/**
+		 * Extrait les opérandes et l'opérateur de l'expression passé en
+		 * paramètre.
+		 * @param {string} L'expression qu'on souhaite évaluer.
+		 * @returns {array} Un tableau contenant le premier opérande,
+		 * l'opérateur et le second opérande dans cet ordre.
+		 * @throws {Error} Si l'expression n'est pas parsable. 
+		 * NOTE Inspiré de code trouvé sur le net.
+		 */
 		function parseExpression(exprStr) {
 			var exprRegExp = /(.+)(\+|\-|\*|\/)(.+)/;
 			var match = exprRegExp.exec(exprStr);
@@ -26,6 +43,11 @@ ns_wconsapp.helpers.calcExpr = (function(OneOpCalculator) {
 			return [operand1, operator, operand2];
 		}
 		
+		/**
+		 * Extrait un nombre d'une chaine de caractère.
+		 * @returns {number} Le nombre extrait de la chaine.
+		 * @throws {Error} S'il est impossible d'extraire un nombre.
+		 */
 		function parseNum(str, index) {
 			var num = parseFloat(str);
 			if (isNaN(num)) {
@@ -36,15 +58,16 @@ ns_wconsapp.helpers.calcExpr = (function(OneOpCalculator) {
 			}
 		}
 
-		// On laisse l'appelant gérer l'exception.
-		var res = "";
+		// On créer un calculateur
 		var calculator = new OneOpCalculator();
+		
+		// On extrait les opérandes et l'opérateur de l'expression
 		var exprComponents = parseExpression(exprStr)
 		var operand1 = parseNum(exprComponents[0]);
 		var operand2 = parseNum(exprComponents[2]);
 		var operator = exprComponents[1];
-		res = calculator.calculate(operand1, operator, operand2)
-
-		return "" + res;
+		
+		// On retourne le résultat du calcul.
+		return calculator.calculate(operand1, operator, operand2);
 	};
 })(H_OneOpCalculator);

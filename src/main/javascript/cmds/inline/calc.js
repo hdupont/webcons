@@ -1,13 +1,12 @@
 ns_wconsapp.cmds.inline.calc = function(api) {
 	var expr = api.inlineCmdArgsString();
 	try {
-		var res = ns_wconsapp.helpers.calcExpr(expr);
+		var res = "" + ns_wconsapp.helpers.calcExpr(expr);
 		api.println(res);	
 	}
 	catch(e) {
 		api.printHelp();
 	}
-	var toto = 10;
 }
 
 ns_wconsapp.cmds.help.calc = function(api) {
