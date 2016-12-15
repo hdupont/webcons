@@ -625,7 +625,9 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 	function addIntro(self) {
 		var sortedCmds = self._commands.getNamesSorted();
 		var sortedCmdsStr = sortedCmds.join(", ");
-		var helpNode = document.createTextNode("Tapez \"help\" (sans les guillemets) pour avoir de l'aide :)");
+		var helpNode = document.createElement("div");
+		helpNode.innerHTML = "Tapez cmdlist pour avoir la liste des commandes comprises par la console.<br />" +
+			"Tapez help suivi du nom d'une commande pour avoir de l'aide sur cette commande.";
 		self._domElt.appendChild(helpNode);
 	}
 	function addKeyboadListener(that) {
@@ -703,6 +705,11 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 				if (loadedCommand === null) {
 					// On va exécuter la commande par défaut.
 					loadedCommand = that._commands.getDefaultCommand();
+				}
+				
+				// On gère le cas où la commande chargée est une commande spéciale.
+				if (cmdName === "cmdlist") {
+					input = new Input(that.findSortedCommandsNames());
 				}
 				
 				// NOTE La commande gère ses output. Elle prend la main sur la
