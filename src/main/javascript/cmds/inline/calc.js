@@ -12,7 +12,7 @@ ns_wconsapp.cmds.inline.calc = function(api) {
 
 ns_wconsapp.cmds.help.calc = function(api) {
 	api.println("Description:");
-	api.println("    calc permet d'effectuer une opération entre deux nombres.");
+	api.println("    " + api.cmdName() + " permet d'effectuer une opération entre deux nombres.");
 	api.println("Syntaxe:");
 	api.println("    calc nombre opérateur nombre");
 	api.println("Avec:");

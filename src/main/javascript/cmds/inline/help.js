@@ -1,3 +1,6 @@
+// Cette commande est géré directement par la console. On ne définit ici que
+// l'aide.
+
 ns_wconsapp.cmds.help.help = function(api) {
 	var firstCmdUnderstood = api.inputString().split(", ")[0]
 	api.println("Description:");
