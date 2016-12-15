@@ -593,9 +593,6 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 		var cmd = this._interactiveCommands.get(name);
 		return cmd;
 	};
-	Console.prototype.printConsoleHelp = function(ioLine) {
-		ioLine.println("Commandes comprises:...")
-	};
 	Console.prototype.findSortedCommandsNames = function(name, handler) {
 		var sortedNames = this._commands.getNamesSorted();
 		var names = "";
@@ -661,8 +658,8 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 						var helpTarget = input.findToken(2, that._prompt.length);
 						
 						// C'est l'aide générale.
-						if (helpTarget === "") {
-							loadedCommand = that._helpCommands.get("wconshelp");
+						if (helpTarget === "" || helpTarget === "help") {
+							loadedCommand = that._helpCommands.get("help");
 							input = new Input(that.findSortedCommandsNames());
 						}
 						// C'est une aide pour une commande spécifique.
