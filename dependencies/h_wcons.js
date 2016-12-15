@@ -718,7 +718,7 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 						if (helpTarget === "" || helpTarget === "help") {
 							// cas a. C'est l'aide générale.
 							
-							loadedCommand = that._helpCommands.get("help");
+							loadedCommand = that._commands.get("help");
 							input = new Input(that.findSortedCommandsNames());
 						}
 						else {
