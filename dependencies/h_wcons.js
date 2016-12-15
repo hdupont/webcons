@@ -634,64 +634,83 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 				that._ioLine.addInputChar(event.key);
 			}
 			else if (keyboard.isEnter(event.keyCode)) {
-				// TODO coder l'help ici (à l'intérieur de ce handler).
-				
+				// On lit le nom de la commande et on avance le curseur d'une
+				// ligne.
+				// NOTE On avance le curseur pour que la commande commence ses
+				// affichage sur une ligne vierge. On va lui passer l'ioLine et
+				// elle s'en servira pour afficher ce qu'elle veut.
 				var inputStr = that._ioLine.readLine();
 				var input = new Input(inputStr);
 				var cmdName = input.findToken(1, that._prompt.length); // Le premier étant le prompt.
 				that._ioLine.moveForward();
 				
 				var loadedCommand = null;
-				// Il y a une commande interactive en cours mais elle a fini de s'exécuter.
-				// On la "décharge".
+				
+				// On regarde d'abord s'il y a une commande interactive en
+				// cours d'exécution. Deux cas:
 				if (that._currentInteractiveCommand !== null && that._currentInteractiveCommand.quitted()) {
+					// Cas 1. Il y a en avait une mais elle a fini de
+					// s'exécuter. On la "décharge".
+					
 					that._currentInteractiveCommand = null;
 				}
 				else {
+					// Cas 2. Il y a en une mais elle n'a pas fini de
+					// s'exécuter. Elle continue.
+					
 					loadedCommand = that._currentInteractiveCommand;
 				}
 				
-				// Pas de commande en cours. On essaie de charger une commande (interactive ou en ligne).
+				// S'il n'a y a pas de commande interactive en cours. On essaie
+				// de charger une commande. Trois cas:
 				if (loadedCommand === null) {
-					// C'est une demande d'aide.
 					if (cmdName === "help") {
-						var helpTarget = input.findToken(2, that._prompt.length);
+						// Cas 1. C'est une demande d'aide. Deux cas:
 						
-						// C'est l'aide générale.
+						var helpTarget = input.findToken(2, that._prompt.length);
 						if (helpTarget === "" || helpTarget === "help") {
+							// cas a. C'est l'aide générale.
+							
 							loadedCommand = that._helpCommands.get("help");
 							input = new Input(that.findSortedCommandsNames());
 						}
-						// C'est une aide pour une commande spécifique.
 						else {
+							// cas b. C'est une aide pour une commande spécifique.
+							
 							loadedCommand = that._helpCommands.get(helpTarget);
 							
-							// Si on n'a pas trouvé l'aide demandée on charge nohelp.
+							// On gère le cas où la commande n'a pas d'aide.
 							if (typeof loadedCommand === "undefined" || loadedCommand === null) {
+								// On va exécuter nohelp.
 								loadedCommand = that._helpCommands.get("nohelp");
 							}	
 						}
 					}
-					// C'est une commande en ligne.
 					else if (that.isInlineCmd(cmdName)) {
+						// Cas 2. C'est une commande en ligne. On la charge.
+						
 						loadedCommand = that._commands.get(cmdName);
 					}
-					// C'est une commande interactive.
 					else if (that.isInteractiveCmd(cmdName)) {
+						// Cas 3. C'est une commande interactive.  On la charge.
+						
 						loadedCommand = that._interactiveCommands.get(cmdName);
 						that._currentInteractiveCommand = loadedCommand;
 					}
 				}
 
-				// Si on n'a pas réussi à charger une commande on l'exécute.
+				// On gère le cas où on n'a pas réussi a charger une commande.
 				if (loadedCommand === null) {
+					// On va exécuter la commande par défaut.
 					loadedCommand = that._commands.getDefaultCommand();
 				}
 				
-				// C'est la commande qui fait ses output.
-				// Elle prend la main sur la ioLine.
+				// NOTE La commande gère ses output. Elle prend la main sur la
+				// ioLine pour s'en servire pour afficher ce qu'elle veut.
 				loadedCommand.onInput(input, that._ioLine, that._helpCommands.get(cmdName));
 				
+				// On fait ce qu'il faut après que la commande a fini de
+				// s'exécuter.
 				if (loadedCommand.quitted()) {
 					that._currentInteractiveCommand = null;
 					var cmdApi = new CommandApi(null, input, that._ioLine);
