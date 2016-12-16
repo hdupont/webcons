@@ -708,10 +708,10 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 	}
 	function addKeyboadListener(that) {
 		that._domElt.addEventListener("keydown", function(event) {
-			if (keyboard.isVisibleChar(event.keyCode, event.key) || keyboard.isSpace(event.keyCode)) {
+			if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
 				that._ioLine.addInputChar(event.key);
 			}
-			else if (keyboard.isEnter(event.keyCode)) {
+			else if (keyboard.isEnter(event)) {
 				// On lit le nom de la commande et on avance le curseur d'une
 				// ligne.
 				// NOTE On avance le curseur pour que la commande commence ses
@@ -800,19 +800,19 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 					that.printPrompt();
 				}
 			}
-			else if (keyboard.isArrowLeft(event.keyCode)) {
+			else if (keyboard.isArrowLeft(event)) {
 				that._ioLine.moveCursorLeft();
 			}
-			else if (keyboard.isArrowRight(event.keyCode)) {
+			else if (keyboard.isArrowRight(event)) {
 				that._ioLine.moveCursorRight();
 			}
-			else if (keyboard.isBackspace(event.keyCode)) {
+			else if (keyboard.isBackspace(event)) {
 				that._ioLine.removeChar();
 			}
-			else if (keyboard.isEnd(event.keyCode)) {
+			else if (keyboard.isEnd(event)) {
 				that._ioLine.moveCursorToEnd();
 			}
-			else if (keyboard.isHome(event.keyCode)) {
+			else if (keyboard.isHome(event)) {
 				that._ioLine.moveCursorToBeginning();
 			}
 		});

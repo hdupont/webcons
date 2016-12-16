@@ -2,6 +2,15 @@
  * Boite à outils clavier.
  */
 var h_keyboardtk = (function() {
+	
+	function getCharCode(character) {
+		return character.charCodeAt(0);
+	}
+	
+	function codeFromEvent(keyboardEvent) {
+		return keyboardEvent.which;
+	}
+	
 	return {
 		/**
 		 * Indique la touche tapée correspond à un caractère affichable.
@@ -12,45 +21,81 @@ var h_keyboardtk = (function() {
 		 * NOTE La touche "Home" a le même code que $, à savoir 36, on est donc
 		 * obligé de tester le libellé de la touche en plus de son code.
 		 */
-		isVisibleChar: function(code, key) {
-			return (key.length === 1) && (33 <= code && code <= 126);
+		isVisibleChar: function(keyboardEvent) {
+			var key = keyboardEvent.key;
+			return (key.length === 1) // C'est un caractère. 
+				&& (33 <= getCharCode(key) && getCharCode(key) <= 126);
 		},
-		/**
-		 * Indique si la touche tapée est une lettre de l'alphabet.
-		 * @param {int} code Le code de la touche tapée.
-		 */
-		isAlpha: function(code) {
-			return (65 <= code && code <= 90)   // Majuscules.
-				|| (97 <= code && code <= 122); // Minuscules.
-		},
-		isDigit: function(code) {
-			return (48 <= code && code <= 57);
-		},
-		isSpace: function(code) {
+		isSpace: function(keyboardEvent) {
+			var code = codeFromEvent(keyboardEvent);
 			return code === 32;
 		},
-		isEnter: function(code) {
+		isEnter: function(keyboardEvent) {
+			var code = codeFromEvent(keyboardEvent);
 			return code === 13;
 		},
-		isArrowLeft: function(code) {
+		isArrowLeft: function(keyboardEvent) {
+			var code = codeFromEvent(keyboardEvent);
 			return code === 37;
 		},
-		isArrowRight: function(code) {
+		isArrowRight: function(keyboardEvent) {
+			var code = codeFromEvent(keyboardEvent);
 			return code === 39;
 		},
-		isBackspace: function(code) {
+		isBackspace: function(keyboardEvent) {
+			var code = codeFromEvent(keyboardEvent);
 			return code === 8;
 		},
-		isEnd: function(code) {
+		isEnd: function(keyboardEvent) {
+			var code = codeFromEvent(keyboardEvent);
 			return code === 35;
 		},
-		isHome: function(code) {
+		isHome: function(keyboardEvent) {
+			var code = codeFromEvent(keyboardEvent);
 			return code === 36;
 		}
 	};
 })();
 
 /*
+KeyboardEvent
+------------- 
+REF Copié/collé Chrome
+
+event: KeyboardEvent
+altKey:false
+bubbles:true
+cancelBubble:false
+cancelable:true
+charCode:0
+code:"KeyD"
+composed:true
+ctrlKey:false
+currentTarget:div#ns_wcons
+defaultPrevented:false
+detail:0
+eventPhase:2
+isTrusted:true
+key:"d"
+keyCode:68
+location:0
+metaKey:false
+path:Array[7]
+repeat:false
+returnValue:true
+shiftKey:false
+sourceCapabilities:InputDeviceCapabilities
+srcElement:div#ns_wcons
+target:div#ns_wcons
+timeStamp:1073876.5050000001
+type:"keydown"
+view:Window
+which:68
+*/
+
+/*
+Ascii
+-----
 REF
 https://fr.wikipedia.org/wiki/American_Standard_Code_for_Information_Interchange
 
