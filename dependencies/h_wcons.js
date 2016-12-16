@@ -810,10 +810,12 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 				that._ioLine.removeChar();
 			}
 			else if (keyboard.isEnd(event)) {
-				that._ioLine.moveCursorToEnd();
+				// TODO
+				// that._ioLine.moveCursorToEnd();
 			}
 			else if (keyboard.isHome(event)) {
-				that._ioLine.moveCursorToBeginning();
+				// TODO
+				// that._ioLine.moveCursorToBeginning();
 			}
 		});
 	}
