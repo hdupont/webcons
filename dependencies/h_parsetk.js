@@ -128,33 +128,6 @@ var h_parsetk = (function() {
 			}
 			var token = this.peekToken(str, firstTokenCharIndex);
 			return token;
-		},
-		
-		/**
-		 * Retourne la partie de la chaine str commençant après l'index-ième token.
-		 * @param {string} str La chaine dans laquelle va s'effectuer la recherche.
-		 * @param {index} Le numéro (commençant à 1) du token après lequel on
-		 * souhaite que la chaine retournée commence.
-		 * @returns {string} La partie de la chaine str commençant après
-		 * l'index-ième token.
-		 * 
-		 * EXAMPLE
-		 * peekAfterToken("Lorem ipsum dolor sit amet", 0)
-		 * => "Lorem ipsum dolor sit amet"
-		 * peekAfterToken("Lorem ipsum dolor sit amet", 1)
-		 * => "ipsum dolor sit amet"
-		 * peekAfterToken("Lorem ipsum dolor sit amet", 2)
-		 * => "dolor sit amet"
-		 */
-		peekAfterToken: function(str, index) {
-			if (str === "") {
-				return "";
-			}
-			var firstTokenCharIndex = this.findTokenIndex(str, index + 1, 0);
-			if (firstTokenCharIndex === -1) {
-				return "";
-			}
-			return str.slice(firstTokenCharIndex);
 		}
 	};
 })();
