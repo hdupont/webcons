@@ -1,7 +1,7 @@
 /**
  * Commande help sans argument de la console.
  */
-ns_wconsapp.cmds.inline.help = function(api) {
+ns_wconsapp.cmds.help = function(api) {
 	var firstCmdUnderstood = api.inputString().split(", ")[0]
 	api.println("Description:");
 	api.println("    " + api.cmdName() + " affiche l'aide d'une commande.");

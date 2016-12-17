@@ -1,4 +1,4 @@
-ns_wconsapp.cmds.inline.chkpar = function(api) {
+ns_wconsapp.cmds.chkpar = function(api) {
 	var parentcnt = 0;
 	var input = api.input();
 	while (! input.isEmpty()) {

@@ -1,4 +1,4 @@
-ns_wconsapp.cmds.inline.chkbal = function(api) {
+ns_wconsapp.cmds.chkbal = function(api) {
 	var input = api.input();
 	
 	// On détermine de quel caractère on doit vérifier "l'équilibre".

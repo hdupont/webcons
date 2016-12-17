@@ -1,4 +1,4 @@
-ns_wconsapp.cmds.inline.echo = function(api) {
+ns_wconsapp.cmds.echo = function(api) {
 	api.println(api.inputString());
 }
 

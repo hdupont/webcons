@@ -1,4 +1,4 @@
-ns_wconsapp.cmds.inline.cmdlist = function(api) {
+ns_wconsapp.cmds.cmdlist = function(api) {
 	api.println("Commandes comprises par la console: ");
 	api.println("    " + api.inputString());
 }

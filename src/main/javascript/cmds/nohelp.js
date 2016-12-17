@@ -1,4 +1,4 @@
-ns_wconsapp.cmds.inline.nohelp = function(api) {
+ns_wconsapp.cmds.nohelp = function(api) {
 	api.println("No help to give :(");
 }
 
