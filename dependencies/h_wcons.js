@@ -68,6 +68,9 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 		this._helpCmd = helpCmd;
 	}
 	
+	// Affichage
+	// ---------
+	
 	/**
 	 * Affiche dans la console la chaine passée en paramètre.
 	 * @param {string} str La chaine qu'on souhaite afficher dans la console.
@@ -85,50 +88,10 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 		this._ioLine.println(cmdOutput);
 	};
 	
-	/**
-	 * Retourne sous la forme d'un objet Input l'entrée utilisateur qui a
-	 * déclenché l'exécution de la commande pour laquelle cette API a été
-	 * définie.
-	 * @returns {Input} L'input correspondant à l'entrée utilisateur qui a
-	 * déclenchée l'exécution de la commande pour laquelle cette API a été
-	 * définie.
-	 */
-//	CommandApi.prototype.input = function() {
-//		return this._input;
-//	};
-	
-	/**
-	 * Retourne sous la forme d'une chaine l'entrée utilisateur qui a déclenché
-	 * l'exécution de la commande pour laquelle cette API a été définie.
-	 * @returns {String} La chaine correspondant à l'entrée utilisateur qui a
-	 * déclenchée l'exécution de la commande pour laquelle cette API a été
-	 * définie.
-	 */
-	CommandApi.prototype.inputString = function() {
-		return this._input.toString();
-	};
-	
-	/**
-	 * Retourne la chaine
-	 */
-	CommandApi.prototype.args = function() {
-		// On saute le premier token qui est le prompt, d'où le 1.
-		return this._input.peekAfterToken(1);
-	};
-	CommandApi.prototype.peekInputAfterToken = function(index) {
-		return this._input.peekAfterToken(index);
-	}
-	CommandApi.prototype.inlineCmdArgsString = function(index) {
-		// On saute les deux premiers tokens. Le premier token est le prompt
-		// et le deuxième token est le nom de la commande, d'où le 2.
-		return this._input.peekAfterToken(2); 
-	}
-	CommandApi.prototype.exit = function() {
-		throw new CommandExitException("Argument cannot be less than zero");
-	}
 	CommandApi.prototype.printPrompt = function() {
 		this._ioLine.printPrompt(this._cmd.getPrompt());
 	}
+	
 	CommandApi.prototype.printHelp = function() {
 		if (typeof this._helpCmd !== "undefined") {
 			this._helpCmd.executeHandler(this);
@@ -137,9 +100,43 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 			this._ioLine.println("No help to give :(");
 		}
 	}
+	
+	// Input
+	// -----
+	
+	/**
+	 * Retourne sous la forme d'un objet Input l'entrée utilisateur.
+	 * @returns {Input} L'input correspondant à l'entrée utilisateur.
+	 */
+	CommandApi.prototype.input = function() {
+		return this._input;
+	};
+	
+	/**
+	 * Retourne sous la forme d'une chaine l'entrée utilisateur.
+	 * @returns {String} La chaine correspondant à l'entrée utilisateur.
+	 */
+	CommandApi.prototype.inputString = function() {
+		return this._input.toString();
+	};
+	
+	CommandApi.prototype.args = function() {
+		return this._input;
+	};
+	
 	CommandApi.prototype.cmdName = function() {
 		return this._cmd.getName();
 	}
+	
+	
+	// Terminaison
+	// -----------
+	
+	/**
+	 * Attribut servant à indiquer à l'interpréteur de commande que la commande
+	 * a terminée son exécution.
+	 * NOTE Une commande est quittée avec un "return". 
+	 */
 	CommandApi.prototype.quit = "quit";
 	
 	return CommandApi;
@@ -434,10 +431,17 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	
 	// Lecture
 	
-	IoLine.prototype.readLine = function() {	
-		var str = this._chars.map(function(consChar) {
-			return consChar.getChar();
-		}).join("");
+	/**
+	 * Retourne ce que l'utilisateur a tapé après le prompt.
+	 * @returns {String} La chaine corrspondant à ce que l'utilisateur a tapé
+	 * après le prompt.
+	 */
+	IoLine.prototype.readUserInput = function() {
+		var str = "";
+		for (var i = this._firstEditableChar; i < this._chars.length - 1; i++) {
+			var consChar = this._chars[i];
+			str += consChar.getChar();
+		}
 		
 		return str;
 	};
@@ -573,20 +577,29 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
  */
 ns_wcons.Input = (function(parseTk) {
 	
+	/**
+	 * @property {string} _str La chaine que l'utilisateur a tapé après
+	 * l'invite de commande.
+	 */
 	function Input(str) {
 		this._str = str;
 	}
-	Input.prototype.peekAfterToken = function(index) {
-		return parseTk.peekAfterToken(this._str, index);
-	};
 	Input.prototype.findToken = function(index, start) {
 		return parseTk.findToken(this._str, index, start);
 	};
 	Input.prototype.readToken = function() {
-		var token = this.peekToken(0);
+		var token = parseTk.peekToken(this._str, 0);
 		var index = parseTk.skipSpaces(this._str, token.length);
 		this._str = this._str.slice(index);
 		return token;
+	};
+	Input.prototype.readChar = function() {
+		var char = this._str.substr(0,1);
+		this._str = this._str.slice(1);
+		return char;
+	};
+	Input.prototype.isEmpty = function() {
+		return this._str.length === 0;
 	};
 	Input.prototype.toString = function() {
 		return this._str;
@@ -717,9 +730,9 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 				// NOTE On avance le curseur pour que la commande commence ses
 				// affichage sur une ligne vierge. On va lui passer l'ioLine et
 				// elle s'en servira pour afficher ce qu'elle veut.
-				var inputStr = that._ioLine.readLine();
+				var inputStr = that._ioLine.readUserInput();
 				var input = new Input(inputStr);
-				var cmdName = input.findToken(1, that._prompt.length); // Le premier étant le prompt.
+				var cmdName = input.readToken();
 				that._ioLine.moveForward();
 				
 				var loadedCommand = null;
