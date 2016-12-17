@@ -611,27 +611,155 @@ ns_wcons.Input = (function(parseTk) {
 })(h_parsetk);
 
 /**
+ * L'interpréteur est en train d'exécuter une commande interactive qui n'a pas terminée.
+ */
+ns_wcons.Interpreter = (function(Commands, CommandApi, Input) {
+	
+	function Interpreter() {
+		this._commands = new Commands();
+		this._interactiveCommands = new Commands();
+		this._helpCommands = new Commands();
+		this._currentCommand = null;
+		this._currentInteractiveCommand = null;
+	}
+	Interpreter.prototype.addInlineCommand = function(name, handler) {
+		this._commands.add(name, handler)
+	};
+	Interpreter.prototype.addInteractiveCommand = function(name, handler) {
+		this._interactiveCommands.addInteractiveCommand(name, handler);
+	};
+	Interpreter.prototype.addHelpCommand = function(name, handler) {
+		this._helpCommands.add(name, handler);
+	};
+	Interpreter.prototype.isInlineCmd = function(name) {
+		var cmd = this._commands.get(name)
+		return cmd != null;
+	};
+	Interpreter.prototype.isInteractiveCmd = function(name) {
+		var cmd = this._interactiveCommands.get(name);
+		return cmd;
+	};
+	Interpreter.prototype.findSortedCommandsNames = function(name, handler) {
+		var sortedNames = this._commands.getNamesSorted();
+		var names = "";
+		sortedNames.forEach(function(nm) {
+			names +=nm + ", "; 
+		});
+		names = names.substring(0, names.length - 2);
+		
+		return names;
+	};
+	Interpreter.prototype.eval = function(inputStr, ioLine, prompt) {
+		// On lit le nom de la commande et on avance le curseur d'une
+		// ligne.
+		// NOTE On avance le curseur pour que la commande commence ses
+		// affichage sur une ligne vierge. On va lui passer l'ioLine et
+		// elle s'en servira pour afficher ce qu'elle veut.
+		var input = new Input(inputStr);
+		
+		var cmdName = input.readToken();
+		ioLine.moveForward();
+		
+		var loadedCommand = null;
+		
+		// On regarde d'abord s'il y a une commande interactive en
+		// cours d'exécution. Deux cas:
+		if (this._currentInteractiveCommand !== null && this._currentInteractiveCommand.quitted()) {
+			// Cas 1. Il y a en avait une mais elle a fini de
+			// s'exécuter. On la "décharge".
+			
+			this._currentInteractiveCommand = null;
+		}
+		else {
+			// Cas 2. Il y a en une mais elle n'a pas fini de
+			// s'exécuter. Elle continue.
+			
+			loadedCommand = this._currentInteractiveCommand;
+		}
+		
+		// S'il n'a y a pas de commande interactive en cours. On essaie
+		// de charger une commande. Trois cas:
+		if (loadedCommand === null) {
+			if (cmdName === "help") {
+				// Cas 1. C'est une demande d'aide. Deux cas:
+				
+				var helpTarget = input.readToken();
+				if (helpTarget === "" || helpTarget === "help") {
+					// cas a. C'est l'aide générale.
+					
+					loadedCommand = this._commands.get("help");
+					input = new Input(this.findSortedCommandsNames());
+				}
+				else {
+					// cas b. C'est une aide pour une commande spécifique.
+					
+					loadedCommand = this._helpCommands.get(helpTarget);
+					
+					// On gère le cas où la commande n'a pas d'aide.
+					if (typeof loadedCommand === "undefined" || loadedCommand === null) {
+						// On va exécuter nohelp.
+						loadedCommand = this._commands.get("nohelp");
+					}	
+				}
+			}
+			else if (this.isInlineCmd(cmdName)) {
+				// Cas 2. C'est une commande en ligne. On la charge.
+				
+				loadedCommand = this._commands.get(cmdName);
+			}
+			else if (this.isInteractiveCmd(cmdName)) {
+				// Cas 3. C'est une commande interactive.  On la charge.
+				
+				loadedCommand = this._interactiveCommands.get(cmdName);
+				this._currentInteractiveCommand = loadedCommand;
+			}
+		}
+
+		// On gère le cas où on n'a pas réussi a charger une commande.
+		if (loadedCommand === null) {
+			// On va exécuter la commande par défaut.
+			loadedCommand = this._commands.getDefaultCommand();
+		}
+		
+		// On gère le cas où la commande chargée est une commande spéciale.
+		if (cmdName === "cmdlist") {
+			input = new Input(this.findSortedCommandsNames());
+		}
+		
+		// NOTE La commande gère ses output. Elle prend la main sur la
+		// ioLine pour s'en servire pour afficher ce qu'elle veut.
+		loadedCommand.onInput(input, ioLine, this._helpCommands.get(cmdName));
+		
+		// On fait ce qu'il faut après que la commande a fini de
+		// s'exécuter.
+		if (loadedCommand.quitted()) {
+			this._currentInteractiveCommand = null;
+			var cmdApi = new CommandApi(null, input, ioLine);
+			ioLine.printPrompt(prompt);
+		}
+	};
+
+	return Interpreter;
+})(ns_wcons.Commands,  ns_wcons.CommandApi, ns_wcons.Input);
+
+/**
  * --------------
  * @class Console
  * --------------
  * Une Console est un simulacre de console dans laquelle l'utilisateur peut
  * exécuter des commandes.
  */
-ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
+ns_wcons.Console = (function(keyboard, Interpreter) {
 	
 	// public
 	// ------
 
 	function Console(ioLine) {
-		this._domElt = null; // Un singleton.
-		this._commands = new Commands();
-		this._interactiveCommands = new Commands();
-		this._helpCommands = new Commands();
-		this._currentCommand = null;
-		this._currentInteractiveCommand = null;
-		this._prompt = "wc>";
+		this._domElt = null; // Un singleton.		
+		this._prompt = "wc> ";
 		this._ioLine = ioLine;
 		this._input = null;
+		this._interpreter = new Interpreter();
 	}
 	
 	Console.prototype.getDomElt = function() {
@@ -640,18 +768,15 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 		}
 
 		this._domElt = buildJConsoleDomElt(this);
-		
 		addIntro(this);
-		
 		this._ioLine.appendTo(this._domElt);
-		
 		addKeyboadListener(this);
-		
+
 		return this._domElt;
 	};
-	Console.prototype.printPrompt = function() {
-		this._ioLine.printPrompt(this._prompt + " ");
-	};
+	
+	// Affichage
+	
 	Console.prototype.moveCursorLeft = function() {
 		this._ioLine.moveLeft();
 	};
@@ -661,38 +786,20 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 	Console.prototype.deleteCharFromLine = function() {
 		this._ioLine.deleteChar();
 	};
-	Console.prototype.print = function(str) {
-		this._ioLine.print(str);
+	Console.prototype.getPrompt = function(prompt) {
+		return this._prompt;
 	};
-	Console.prototype.println = function(str) {
-		this._ioLine.println(str);
-	};
+	
+	// Commandes
+	
 	Console.prototype.addInlineCommand = function(name, handler) {
-		this._commands.add(name, handler, false);
+		this._interpreter.addInlineCommand(name, handler, false);
 	};
 	Console.prototype.addInteractiveCommand = function(name, handler) {
-		this._interactiveCommands.addInteractiveCommand(name, handler);
+		this._interpreter.addInteractiveCommand(name, handler);
 	};
 	Console.prototype.addHelpCommand = function(name, handler) {
-		this._helpCommands.add(name, handler);
-	};
-	Console.prototype.isInlineCmd = function(name) {
-		var cmd = this._commands.get(name)
-		return cmd != null;
-	};
-	Console.prototype.isInteractiveCmd = function(name) {
-		var cmd = this._interactiveCommands.get(name);
-		return cmd;
-	};
-	Console.prototype.findSortedCommandsNames = function(name, handler) {
-		var sortedNames = this._commands.getNamesSorted();
-		var names = "";
-		sortedNames.forEach(function(nm) {
-			names +=nm + ", "; 
-		});
-		names = names.substring(0, names.length - 2);
-		
-		return names;
+		this._interpreter.addHelpCommand(name, handler);
 	};
 	
 	// private
@@ -714,8 +821,6 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 		return outputElt;
 	}
 	function addIntro(self) {
-		var sortedCmds = self._commands.getNamesSorted();
-		var sortedCmdsStr = sortedCmds.join(", ");
 		var helpNode = document.createElement("div");
 		helpNode.innerHTML = "Tapez cmdlist pour avoir la liste des commandes comprises par la console.<br />" +
 			"Tapez help suivi du nom d'une commande pour avoir de l'aide sur cette commande.";
@@ -727,93 +832,8 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 				that._ioLine.addInputChar(event.key);
 			}
 			else if (keyboard.isEnter(event)) {
-				// On lit le nom de la commande et on avance le curseur d'une
-				// ligne.
-				// NOTE On avance le curseur pour que la commande commence ses
-				// affichage sur une ligne vierge. On va lui passer l'ioLine et
-				// elle s'en servira pour afficher ce qu'elle veut.
 				var inputStr = that._ioLine.readUserInput();
-				var input = new Input(inputStr);
-				var cmdName = input.readToken();
-				that._ioLine.moveForward();
-				
-				var loadedCommand = null;
-				
-				// On regarde d'abord s'il y a une commande interactive en
-				// cours d'exécution. Deux cas:
-				if (that._currentInteractiveCommand !== null && that._currentInteractiveCommand.quitted()) {
-					// Cas 1. Il y a en avait une mais elle a fini de
-					// s'exécuter. On la "décharge".
-					
-					that._currentInteractiveCommand = null;
-				}
-				else {
-					// Cas 2. Il y a en une mais elle n'a pas fini de
-					// s'exécuter. Elle continue.
-					
-					loadedCommand = that._currentInteractiveCommand;
-				}
-				
-				// S'il n'a y a pas de commande interactive en cours. On essaie
-				// de charger une commande. Trois cas:
-				if (loadedCommand === null) {
-					if (cmdName === "help") {
-						// Cas 1. C'est une demande d'aide. Deux cas:
-						
-						var helpTarget = input.readToken();
-						if (helpTarget === "" || helpTarget === "help") {
-							// cas a. C'est l'aide générale.
-							
-							loadedCommand = that._commands.get("help");
-							input = new Input(that.findSortedCommandsNames());
-						}
-						else {
-							// cas b. C'est une aide pour une commande spécifique.
-							
-							loadedCommand = that._helpCommands.get(helpTarget);
-							
-							// On gère le cas où la commande n'a pas d'aide.
-							if (typeof loadedCommand === "undefined" || loadedCommand === null) {
-								// On va exécuter nohelp.
-								loadedCommand = that._commands.get("nohelp");
-							}	
-						}
-					}
-					else if (that.isInlineCmd(cmdName)) {
-						// Cas 2. C'est une commande en ligne. On la charge.
-						
-						loadedCommand = that._commands.get(cmdName);
-					}
-					else if (that.isInteractiveCmd(cmdName)) {
-						// Cas 3. C'est une commande interactive.  On la charge.
-						
-						loadedCommand = that._interactiveCommands.get(cmdName);
-						that._currentInteractiveCommand = loadedCommand;
-					}
-				}
-
-				// On gère le cas où on n'a pas réussi a charger une commande.
-				if (loadedCommand === null) {
-					// On va exécuter la commande par défaut.
-					loadedCommand = that._commands.getDefaultCommand();
-				}
-				
-				// On gère le cas où la commande chargée est une commande spéciale.
-				if (cmdName === "cmdlist") {
-					input = new Input(that.findSortedCommandsNames());
-				}
-				
-				// NOTE La commande gère ses output. Elle prend la main sur la
-				// ioLine pour s'en servire pour afficher ce qu'elle veut.
-				loadedCommand.onInput(input, that._ioLine, that._helpCommands.get(cmdName));
-				
-				// On fait ce qu'il faut après que la commande a fini de
-				// s'exécuter.
-				if (loadedCommand.quitted()) {
-					that._currentInteractiveCommand = null;
-					var cmdApi = new CommandApi(null, input, that._ioLine);
-					that.printPrompt();
-				}
+				that._interpreter.eval(inputStr, that._ioLine, that._prompt);
 			}
 			else if (keyboard.isArrowLeft(event)) {
 				that._ioLine.moveCursorLeft();
@@ -836,7 +856,7 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 	}
 
 	return Console;
-})(ns_wcons.Input, h_keyboardtk, ns_wcons.Commands, ns_wcons.CommandApi);
+})(h_keyboardtk, ns_wcons.Interpreter);
 
 // API
 // TODO faire que ns_wcons utilise webconns, avec ns = namespace pour plus de clareté.
@@ -852,7 +872,7 @@ var h_wcons = (function(Console, IoLine) {
 			
 			var jcons = new Console(ioLine);
 			jconsDomElt = jcons.getDomElt();
-			jcons.printPrompt();
+			ioLine.printPrompt(jcons.getPrompt());
 			
 			var container = document.getElementById(id);
 			container.appendChild(jconsDomElt);
