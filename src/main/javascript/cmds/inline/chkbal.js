@@ -1,4 +1,4 @@
-ns_wconsapp.cmds.inline.chkpar = function(api) {
+ns_wconsapp.cmds.inline.chkbal = function(api) {
 	var parentcnt = 0;
 	var input = api.input();
 	while (! input.isEmpty()) {
@@ -11,9 +11,9 @@ ns_wconsapp.cmds.inline.chkpar = function(api) {
 		}
 	}
 	api.println(parentcnt === 0 ? "OK" : "NOT OK");
-};
+}
 
-ns_wconsapp.cmds.help.chkpar = function(api) {
+ns_wconsapp.cmds.help.chkbal = function(api) {
 	api.println("Description:");
 	api.println("    " + api.cmdName() + " vérifie si une expression est bien parenthésée.");
 	api.println("Syntaxe:");
@@ -22,4 +22,4 @@ ns_wconsapp.cmds.help.chkpar = function(api) {
 	api.println("    exp: l'expression à vérifier.");
 	api.println("Exemple d'utilisation:");
 	api.println("    " + api.cmdName() + " ((bonjour))(tout (le))(monde)");
-};
+}
