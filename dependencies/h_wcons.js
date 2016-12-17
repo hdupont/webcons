@@ -519,8 +519,19 @@ ns_wcons.Input = (function(parseTk) {
 	function Input(str) {
 		this._str = str;
 	}
-	Input.prototype.findToken = function(index, start) {
-		return parseTk.findToken(this._str, index, start);
+	
+	/**
+	 * Compare le n-ième token avec str.
+	 * @param {int} n La position du token à comparer (on commence à 1).
+	 * @param {string} str La chaine à laquelle comparer le token.
+	 * @returns {bool} true si le n-ième token vaut str. false sinon.
+	 * EXAMPLE
+	 * Si this._str vaut "Lorem ipsum dolor sit amet"
+	 * input.matchToken(2, "ipsum") vaut true
+	 */
+	Input.prototype.matchToken = function(n, str) {
+		token = parseTk.findToken(this._str, n, 0);
+		return token === str;
 	};
 	Input.prototype.readToken = function() {
 		var token = parseTk.peekToken(this._str, 0);
@@ -543,7 +554,7 @@ ns_wcons.Input = (function(parseTk) {
 	return Input;
 })(h_parsetk);
 
-ns_wcons.Interpreter = (function(Commands, CommandApi, Input) {
+ns_wcons.Interpreter = (function(Commands, CommandApi) {
 	
 	function Interpreter() {
 		this._commands = new Commands();
@@ -570,14 +581,12 @@ ns_wcons.Interpreter = (function(Commands, CommandApi, Input) {
 		
 		return names;
 	};
-	Interpreter.prototype.eval = function(inputStr, ioLine, prompt) {
+	Interpreter.prototype.eval = function(input, ioLine, prompt) {
 		// On lit le nom de la commande et on avance le curseur d'une
 		// ligne.
 		// NOTE On avance le curseur pour que la commande commence ses
 		// affichage sur une ligne vierge. On va lui passer l'ioLine et
 		// elle s'en servira pour afficher ce qu'elle veut.
-		var input = new Input(inputStr);
-		
 		var cmdName = input.readToken();
 		ioLine.moveForward();
 		
@@ -643,17 +652,18 @@ ns_wcons.Interpreter = (function(Commands, CommandApi, Input) {
  * Une Console est un simulacre de console dans laquelle l'utilisateur peut
  * exécuter des commandes.
  */
-ns_wcons.Console = (function(keyboard, Interpreter) {
+ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	
 	// public
 	// ------
 
-	function Console(ioLine) {
+	function Console(ioLine, domInput) {
 		this._domElt = null; // Un singleton.		
 		this._prompt = "wc> ";
 		this._ioLine = ioLine;
 		this._input = null;
 		this._interpreter = new Interpreter();
+		this._domInput = domInput;
 	}
 	
 	Console.prototype.getDomElt = function() {
@@ -714,8 +724,11 @@ ns_wcons.Console = (function(keyboard, Interpreter) {
 				that._ioLine.addInputChar(event.key);
 			}
 			else if (keyboard.isEnter(event)) {
-				var inputStr = that._ioLine.readUserInput();
-				that._interpreter.eval(inputStr, that._ioLine, that._prompt);
+				var input = findInput(that._ioLine, that._domInput);
+				if (input.matchToken(2, "<")) {
+					console.log("&&& <");
+				}
+				that._interpreter.eval(input, that._ioLine, that._prompt);
 			}
 			else if (keyboard.isArrowLeft(event)) {
 				that._ioLine.moveCursorLeft();
@@ -734,12 +747,23 @@ ns_wcons.Console = (function(keyboard, Interpreter) {
 			}
 		});
 	}
-	function getInput(inputStr) {
-		
+	function findInput(ioLine, domInput) {
+		var finalInput = null;
+		var inputStr = ioLine.readUserInput();
+		var candidateInput = new Input(inputStr);
+		if (candidateInput.matchToken(2, "<")) {
+			var str = candidateInput.readToken() + " ";
+			str += domInput.value;
+			finalInput = new Input(str);
+		}
+		else {
+			finalInput = candidateInput;
+		}
+		return finalInput;
 	}
 	
 	return Console;
-})(h_keyboardtk, ns_wcons.Interpreter);
+})(h_keyboardtk, ns_wcons.Interpreter, ns_wcons.Input);
 
 // API
 // TODO faire que ns_wcons utilise webconns, avec ns = namespace pour plus de clareté.
@@ -750,10 +774,10 @@ var h_wcons = (function(Console, IoLine) {
 		 * Ajoute une console dans l'élément dont l'ID est passé en paramètre.
 		 * @returns {JConsole} La console qui vient d'être ajoutée au DOM.
 		 */
-		appendTo: function(id) {
+		appendTo: function(id, inputId) {
 			var ioLine = new IoLine();
-			
-			var jcons = new Console(ioLine);
+			var domInput = document.getElementById(inputId);
+			var jcons = new Console(ioLine, domInput);
 			jconsDomElt = jcons.getDomElt();
 			ioLine.printPrompt(jcons.getPrompt());
 			
