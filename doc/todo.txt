@@ -1,3 +1,8 @@
 GOAL
 Ne pas avoir à taper l'exemple d'utilisation de l'aide d'une commande.
 
+GOAL
+Répété une commande sans avoir à la retaper.
+
+IDEA
+Mécanique qui dériver "gratuitement" la répététition d'une commande.
