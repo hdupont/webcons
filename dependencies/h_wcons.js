@@ -671,15 +671,6 @@ ns_wcons.Console = (function(keyboard, Interpreter) {
 	
 	// Affichage
 	
-	Console.prototype.moveCursorLeft = function() {
-		this._ioLine.moveLeft();
-	};
-	Console.prototype.moveCursorRight = function() {
-		this._ioLine.moveRight();
-	};
-	Console.prototype.deleteCharFromLine = function() {
-		this._ioLine.deleteChar();
-	};
 	Console.prototype.getPrompt = function(prompt) {
 		return this._prompt;
 	};
