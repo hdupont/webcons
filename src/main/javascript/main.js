@@ -9,7 +9,7 @@
 (function(cmds, wcons) {
 	
 	// On ajoute une console au DOM.
-	var cons = wcons.appendTo("calcapp");
+	var cons = wcons.appendTo("h_wcapp");
 	
 	// On ajoute les commandes interactives et leur aide.
 	for (var cmdName in cmds) {

@@ -734,7 +734,10 @@ ns_wcons.Console = (function(keyboard, Interpreter) {
 			}
 		});
 	}
-
+	function getInput(inputStr) {
+		
+	}
+	
 	return Console;
 })(h_keyboardtk, ns_wcons.Interpreter);
 
