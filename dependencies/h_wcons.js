@@ -24,6 +24,19 @@
  * La ligne de commande est équipée d'un curseur et est éditable, l'utilisateur
  * peut déplacer le curseur et procéder à des ajouts ou des suppression de
  * caractères au niveau du curseur.
+ * 
+ * Grammaire des commandes
+ * -----------------------
+ * La grammaire des commandes est données en EBNF à la différence que les
+ * non-terminaux sont entre chevrons (<>) comme en BNF.
+ * 
+ * NOTE 
+ * <concmd> ::= <cmd> [<inopt>]
+ * <cmd> ::= <name><args>
+ * <inopt> ::= "<" " " <insrc>
+ * <insrc> ::= "" | "din"
+ * <name> ::= l'identificateur d'une commande
+ * <args> ::= une suite de token représentant les arguments de la commande
  */
 
 /**
@@ -764,19 +777,38 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 			}
 		});
 	}
+
+	/**
+	 * Retourne l'entrée utilisateur initialisée depuis l'entrée correspondant
+	 * aux options précisée par celui-ci. Les entrées peuvent provenir
+	 * directement de la ligne de commande ou du DOM.
+	 * @param {IoLine} ioLine L'objet permettant d'effectuer les E/S.
+	 * @param {HTMLElement} domInput L'entrée qui lit depuis le DOM.
+	 * @returns {Input} L'entrée utilisateur utilisable par l'interpréteur
+	 * de commande.
+	 */
 	function findInput(ioLine, domInput) {
-		var finalInput = null;
+		var res = null;
 		var inputStr = ioLine.readUserInput();
-		var candidateInput = new Input(inputStr);
-		if (candidateInput.matchToken(2, "<")) {
-			var str = candidateInput.readToken() + " ";
-			str += domInput.value;
-			finalInput = new Input(str);
+		var split = inputStr.split(" < ");
+
+		if (split.length > 2) {
+			throw new Error("findInput - Only one input redirection allowed");
 		}
-		else {
-			finalInput = candidateInput;
+		
+		var inputedCmd = split[0];
+		var inputSource = split[1];
+		
+		// NOTE On considère qu'il n'y a pas d'option s'il n'y a pas
+		// d'option... ou si le nom de la source est vide.
+		var noInputOptions = split.length === 1 || inputSource.length === 0; 
+		if (noInputOptions) {
+			res = new Input(inputedCmd);
 		}
-		return finalInput;
+		else if (inputSource === "din") { // din = dom input.
+			res = new Input(inputedCmd + " " + domInput.value);
+		}
+		return res;
 	}
 	
 	return Console;
