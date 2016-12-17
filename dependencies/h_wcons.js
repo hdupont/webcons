@@ -574,6 +574,8 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
  * ------------
  * Une Input est une chaine qui sait se parser. Elle correspond à une chaine
  * tapée par l'utilisateur.
+ * TODO Définir une classe ParsableString qui encapsule cette Input et le 
+ * parsetk.
  */
 ns_wcons.Input = (function(parseTk) {
 	
