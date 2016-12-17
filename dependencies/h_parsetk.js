@@ -1,3 +1,7 @@
+/**
+ * NOTE En JavaScript les strings ne sont pas mutable donc on ne définit ici
+ * que peek et pas des read.
+ */
 var h_parsetk = (function() {
 	return {
 		
