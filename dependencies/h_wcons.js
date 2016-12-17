@@ -782,9 +782,6 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	return Console;
 })(h_keyboardtk, ns_wcons.Interpreter, ns_wcons.Input);
 
-// API
-// TODO faire que ns_wcons utilise webconns, avec ns = namespace pour plus de clareté.
-// })(webconns.Console, ns_wcons);
 var h_wcons = (function(Console, IoLine) {
 	return {
 		/**
