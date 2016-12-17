@@ -1,0 +1,3 @@
+GOAL
+Ne pas avoir à taper l'exemple d'utilisation de l'aide d'une commande.
+
