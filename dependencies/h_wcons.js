@@ -436,7 +436,7 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	};
 	IoLine.prototype.moveCursorToBeginning = function() {
 		this._cursorIndex = this._firstEditableChar;
-		this._domView.updateLine(this);
+		updateWithInputChars(this);
 	};
 	// Abandonne son contenu et avance
 	IoLine.prototype.moveForward = function() {
@@ -727,12 +727,10 @@ ns_wcons.Console = (function(keyboard, Interpreter) {
 				that._ioLine.removeChar();
 			}
 			else if (keyboard.isEnd(event)) {
-				// TODO
-				// that._ioLine.moveCursorToEnd();
+				 that._ioLine.moveCursorToEnd();
 			}
 			else if (keyboard.isHome(event)) {
-				// TODO
-				// that._ioLine.moveCursorToBeginning();
+				 that._ioLine.moveCursorToBeginning();
 			}
 		});
 	}
