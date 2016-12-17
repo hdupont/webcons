@@ -70,6 +70,14 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 	CommandApi.prototype.print = function(str) {
 		this._ioLine.print(str);
 	};
+
+	CommandApi.prototype.printChar = function(character) {
+		this._ioLine.addOutputChar(character);
+	};
+	
+	CommandApi.prototype.newLine = function() {
+		this._ioLine.moveForward();
+	};
 	
 	/**
 	 * Affiche dans la console la chaine passée en paramètre puis passe à la
@@ -386,6 +394,13 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 		updateWithInputChars(this);
 	};
 	IoLine.prototype.addOutputChar = function(character) {
+		if (character === "\n") {
+			this.moveForward();
+			this._firstEditableChar = 0;
+		}
+		if (character === "\t") {
+			addNTimes(this, 4, " ");
+		}
 		addChar(this, character);
 		updateWithInputChars(this);
 	};
@@ -402,7 +417,9 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 		this._firstEditableChar = str.length;
 	};
 	IoLine.prototype.println = function(str) {
-		this.print(str);
+		if (typeof str !== "undefined" || str === "") {
+			this.print(str);
+		}
 		this.moveForward();
 	};
 	
@@ -472,6 +489,13 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 		self._chars.splice(self._cursorIndex, 0, new Character(character));
 		self._cursorIndex++;
 	};
+
+	function addNTimes(self, n, character) {
+		for (var i = 0; i < n; i++) {
+			self._chars.splice(self._cursorIndex, 0, new Character(character));
+			self._cursorIndex++;	
+		}
+	};
 	
 	function updateWithInputChars(self) {
 		self._domView.updateLine(self._chars, self._cursorIndex, self._prefix);
@@ -536,7 +560,7 @@ ns_wcons.Input = (function(parseTk) {
 	Input.prototype.readToken = function() {
 		var token = parseTk.peekToken(this._str, 0);
 		var index = parseTk.skipSpaces(this._str, token.length);
-		this._str = this._str.slice(index);
+		this._str = index < 0 ? "" : this._str.slice(index);
 		return token;
 	};
 	Input.prototype.readChar = function() {
@@ -567,10 +591,6 @@ ns_wcons.Interpreter = (function(Commands, CommandApi) {
 	Interpreter.prototype.addHelpCommand = function(name, handler) {
 		this._helpCommands.add(name, handler);
 	};
-	Interpreter.prototype.isInlineCmd = function(name) {
-		var cmd = this._commands.get(name)
-		return cmd != null;
-	};
 	Interpreter.prototype.findSortedCommandsNames = function(name, handler) {
 		var sortedNames = this._commands.getNamesSorted();
 		var names = "";
@@ -597,13 +617,11 @@ ns_wcons.Interpreter = (function(Commands, CommandApi) {
 			var helpTarget = input.readToken();
 			if (helpTarget === "" || helpTarget === "help") {
 				// cas a. C'est l'aide générale.
-				
 				loadedCommand = this._commands.get("help");
 				input = new Input(this.findSortedCommandsNames());
 			}
 			else {
 				// cas b. C'est une aide pour une commande spécifique.
-				
 				loadedCommand = this._helpCommands.get(helpTarget);
 				
 				// On gère le cas où la commande n'a pas d'aide.
@@ -613,9 +631,8 @@ ns_wcons.Interpreter = (function(Commands, CommandApi) {
 				}	
 			}
 		}
-		else if (this.isInlineCmd(cmdName)) {
+		else {
 			// Cas 2. C'est une commande en ligne. On la charge.
-			
 			loadedCommand = this._commands.get(cmdName);
 		}
 
