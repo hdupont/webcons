@@ -760,7 +760,7 @@ ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi) {
 					if (cmdName === "help") {
 						// Cas 1. C'est une demande d'aide. Deux cas:
 						
-						var helpTarget = input.findToken(2, that._prompt.length);
+						var helpTarget = input.readToken();
 						if (helpTarget === "" || helpTarget === "help") {
 							// cas a. C'est l'aide générale.
 							
