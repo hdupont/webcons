@@ -49,6 +49,22 @@ var h_parsetk = (function() {
 		},
 		
 		/**
+		 * Retourne l'indice du premier caractère suivant le token trouvé à
+		 * partir de start. Retourn -1 si l'indice de départ est supérieur 
+		 * à la longueur de la chaine.
+		 * @returns {int} Retourne l'indice du premier caractère suivant le
+		 * token trouvé à
+		 */
+		skipToken: function(str, start) {
+			if (start > str.length - 1) {
+				return -1;
+			}
+			var tokenFirstChar = this.skipSpaces(str, start);
+			var spaceAfterToken = this.skipNonSpaces(str, tokenFirstChar);
+			return spaceAfterToken;
+		},
+		
+		/**
 		 * Retourne le premier token trouvé à partir de start.
 		 * @param {string} str La chaine dans laquelle on veut effectuer
 		 * recherche.
@@ -60,8 +76,7 @@ var h_parsetk = (function() {
 			if (start > str.length - 1) {
 				"";
 			}
-			var index = start;
-			this.skipSpaces(str, index);
+			var index = this.skipSpaces(str, start);
 			var token = "";
 			while (str[index] !== " " && index < str.length) {
 				token += str[index];

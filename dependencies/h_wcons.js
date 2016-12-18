@@ -555,6 +555,7 @@ ns_wcons.Input = (function(parseTk) {
 	 */
 	function Input(str) {
 		this._str = str;
+		this._index = str.length > 0 ? 0 : -1;
 	}
 	
 	/**
@@ -571,21 +572,39 @@ ns_wcons.Input = (function(parseTk) {
 		return token === str;
 	};
 	Input.prototype.readToken = function() {
-		var token = parseTk.peekToken(this._str, 0);
-		var index = parseTk.skipSpaces(this._str, token.length);
-		this._str = index < 0 ? "" : this._str.slice(index);
+		var token = parseTk.peekToken(this._str, this._index);
+		
+		// On fait pointer this._index sur le caractère qui suit le token lu. 
+		// NOTE peekToken ne modifie pas la chaine, donc on commence par se
+		// placer sur le premier caractère du token avec skipSpaces.
+		var index = parseTk.skipToken(this._str, 0);
+		if (index < 0 || index >= this._str.length) {
+			this._index = -1;
+		}
+		else {
+			this._index = index;
+		}
 		return token;
 	};
 	Input.prototype.readChar = function() {
-		var char = this._str.substr(0,1);
-		this._str = this._str.slice(1);
-		return char;
+		var character = this._str[index];
+		this._index++;
+		return character;
 	};
 	Input.prototype.isEmpty = function() {
 		return this._str.length === 0;
 	};
 	Input.prototype.toString = function() {
-		return this._str;
+		return this._index > 0 ? this._str.slice(this._index) : "";
+	};
+	Input.prototype.skipSpaces = function() {
+		var index = parseTk.skipSpaces(this._str, this._index);
+		if (index < 0 || index >= this._str.length) {
+			this._index = -1;
+		}
+		else {
+			this._index = index;
+		}
 	};
 
 	return Input;
@@ -660,8 +679,12 @@ ns_wcons.Interpreter = (function(Commands, CommandApi) {
 			input = new Input(this.findSortedCommandsNames());
 		}
 		
+		// On passe ses arguments à la commande et on lui demande de s'exécuter.
+		// NOTE Les arguments de la commande commencent au premier caractère
+		// qui ne soit pas un espace après le nom de la commande.
 		// NOTE La commande gère ses output. Elle prend la main sur la
 		// ioLine pour s'en servire pour afficher ce qu'elle veut.
+		input.skipSpaces(); 
 		loadedCommand.onInput(input, ioLine, this._helpCommands.get(cmdName));
 		
 		// On fait ce qu'il faut après que la commande a fini de
