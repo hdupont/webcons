@@ -848,7 +848,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 		var split = inputStr.split(" < ");
 		var inputedCmd = split[0];
 		var inputSource = split[1];		
-		var res = {input: null, output: null};
+		var io = {input: null, output: null};
 		
 		// On détermine la source de la commande et de son entrée.
 		// Trois cas:
@@ -866,20 +866,21 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 		// mais fournit son entrée depuis le DOM.
 		var cmdFromPromtAndInputFromDom = inputSource === "din";
 		if (cmdAndInputFromDom) {
-			res.input = new Input(domInput.value);
+			io.input = new Input(domInput.value);
 		}
 		else if (cmdAndInputFromPrompt) {
-			res.input = new Input(inputedCmd);
+			io.input = new Input(inputedCmd);
 		}
 		else if (cmdFromPromtAndInputFromDom) {
-			res.input = new Input(inputedCmd + " " + domInput.value);
+			io.input = new Input(inputedCmd + " " + domInput.value);
 		}
 		else {
 			throw new Error("findIo - Unknown redirection option");
 		}
 		
-		res.output = ioLine;
-		return res;
+		io.output = ioLine;
+		
+		return io;
 	}
 	
 	return Console;
