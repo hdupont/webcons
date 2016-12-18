@@ -596,12 +596,35 @@ ns_wcons.Input = (function(parseTk) {
 		return token;
 	};
 	Input.prototype.readChar = function() {
+		if (this.isEmpty()) {
+			throw new Error("readChar - Empty input");
+		}
+		
 		var character = this._str[this._index];
 		this._index++;
 		return character;
 	};
+	/**
+	 * Renvoi le contenu d'une ligne (sans le séparateur de ligne).
+	 * NOTE C'est au client de gérer les sauts de ligne.
+	 * @returns {string} Le contenu de la ligne lue. 
+	 */
+	Input.prototype.readLine = function() {
+		var line = "";
+		while (! this.isEmpty()) {
+			c = this.readChar();
+			if (c === "\n") {
+				break;
+			}
+			else {
+				line += c;
+			}
+		}
+		
+		return line;
+	};
 	Input.prototype.isEmpty = function() {
-		return this._index === this._str.length;
+		return this._index >= this._str.length;
 	};
 	Input.prototype.toString = function() {
 		return this._index > 0 ? this._str.slice(this._index) : "";

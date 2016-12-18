@@ -1,10 +1,9 @@
 ns_wconsapp.cmds.displayl = function(api) {
-	var str = api.inputString()
-	for (var i = 0; i < str.length; i++) {
-		var character = str[i];
-		api.printChar(character);
+	var input = api.input()
+	while (! input.isEmpty()) {
+		var line = input.readLine();
+		api.println(line);
 	}
-	api.newLine();
 }
 
 ns_wconsapp.cmds.help.echo = function(api) {
