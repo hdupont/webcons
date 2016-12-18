@@ -844,11 +844,16 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	 * NOTE  din = dom input.
 	 */
 	function findIo(ioLine, domInput, domOutput) {
+		var io = {input: null, output: null};
+		
 		var inputStr = ioLine.readUserInput();
 		var split = inputStr.split(" < ");
 		var inputedCmd = split[0];
-		var inputSource = split[1];		
-		var io = {input: null, output: null};
+		var ioOptions = split[1];
+		if (ioOptions) {
+			var ioSplit = ioOptions.split(" > ");
+			var inputSource = ioSplit[0];
+		}
 		
 		// On détermine la source de la commande et de son entrée.
 		// Trois cas:
