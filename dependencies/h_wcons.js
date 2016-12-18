@@ -314,6 +314,7 @@ ns_wcons.LineDomView = (function() {
 	function LineDomView(domElt) {
 		this._domContainer = domElt;
 		this._prefix = "";
+		this._cursorElement = null;
 		
 	}
 	LineDomView.prototype.updateLine = function(chars, cursorIndex, prefix) {
@@ -321,19 +322,19 @@ ns_wcons.LineDomView = (function() {
 		
 		var self = this;
 		chars.forEach(function(consChar, index) {
-			var c = consChar.getChar();
-			if (c === "" || c === " ") {
-				c = "&nbsp";
-			}
-			domElt = buildCharDomElt(self, c, index === cursorIndex);
+			domElt = buildCharDomElt(self, consChar);
 			self._domContainer.appendChild(domElt);
 		});
+		positionCursor(this, cursorIndex);
 		this._domContainer.scrollIntoView();
-		
 	};
-	LineDomView.prototype.addChar = function(c) {
-		var domElt = buildCharDomElt(self, c);
-		this._domContainer.appendChild(domElt);
+	
+	/**
+	 * Ajoute le caractère devant le curseur.
+	 */
+	LineDomView.prototype.addChar = function(c, cursorIndex) {
+		var charElt = buildCharDomElt(self, c);
+		this._domContainer.insertBefore(charElt, this._cursorElement);
 	};
 	LineDomView.prototype.removeCursor = function(cursorPosition) {
 		this._domContainer.children[cursorPosition].style.backgroundColor = "";
@@ -345,13 +346,22 @@ ns_wcons.LineDomView = (function() {
 	// private
 	// -------
 	
-	function buildCharDomElt(that, character, isUnderCursor) {
-		var charElt = document.createElement("span");
-		charElt.innerHTML = character;
-		
-		if (isUnderCursor) {
-			charElt.style.backgroundColor = "yellow";
+	function positionCursor(self, cursorIndex) {
+		if (self._cursorElement) {
+			self._cursorElement.style.backgroundColor = "";
 		}
+		
+		self._cursorElement = self._domContainer.children[cursorIndex];
+		self._cursorElement.style.backgroundColor = "yellow";
+	}
+	
+	function buildCharDomElt(that, consChar) {
+		var c = consChar.getChar();
+		if (c === "" || c === " ") {
+			c = "&nbsp";
+		}
+		var charElt = document.createElement("span");
+		charElt.innerHTML = c;
 		
 		return charElt;
 	}
@@ -404,7 +414,6 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	
 	IoLine.prototype.addInputChar = function(character) {
 		addChar(this, character);
-		updateWithInputChars(this);
 	};
 	IoLine.prototype.addOutputChar = function(character) {
 		if (character === "\n") {
@@ -415,7 +424,6 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 			addNTimes(this, 4, " ");
 		}
 		addChar(this, character);
-		updateWithInputChars(this);
 	};
 	IoLine.prototype.print = function(str) {
 		clearChars(this);
@@ -499,14 +507,15 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	}
 	
 	function addChar(self, character) {
-		self._chars.splice(self._cursorIndex, 0, new Character(character));
+		var consChar = new Character(character);
+		self._chars.splice(self._cursorIndex, 0, consChar);
 		self._cursorIndex++;
+		self._domView.addChar(consChar, this._cursorIndex);
 	};
 
 	function addNTimes(self, n, character) {
 		for (var i = 0; i < n; i++) {
-			self._chars.splice(self._cursorIndex, 0, new Character(character));
-			self._cursorIndex++;	
+			addChar(self, character)
 		}
 	};
 	
