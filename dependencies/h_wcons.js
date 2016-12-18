@@ -812,32 +812,46 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	/**
 	 * Retourne l'entrée utilisateur initialisée depuis l'entrée correspondant
 	 * aux options précisée par celui-ci. Les entrées peuvent provenir
-	 * directement de la ligne de commande ou du DOM.
+	 * directement de la ligne de commande et/ou du DOM.
 	 * @param {IoLine} ioLine L'objet permettant d'effectuer les E/S.
 	 * @param {HTMLElement} domInput L'entrée qui lit depuis le DOM.
 	 * @returns {Input} L'entrée utilisateur utilisable par l'interpréteur
 	 * de commande.
+	 * NOTE  din = dom input.
 	 */
 	function findInput(ioLine, domInput) {
-		var res = null;
 		var inputStr = ioLine.readUserInput();
 		var split = inputStr.split(" < ");
-
-		if (split.length > 2) {
-			throw new Error("findInput - Only one input redirection allowed");
-		}
-		
 		var inputedCmd = split[0];
-		var inputSource = split[1];
+		var inputSource = split[1];		
+		var res = null;
 		
+		// On détermine la source de la commande et de son entrée.
+		// Trois cas:
+		// Cas 1. L'utilisateur fournit la commande et son entrée dans l'entrée
+		// DOM.
+		// NOTE Possibilité offerte si l'utilisateur tape sur la ligne de commande
+		// seulement une option d'entrée.
+		var cmdAndInputFromDom = inputStr === "< din"; // NOTE  din = Dom INput.
+		// Cas 2. L'utilisateur fournit la commande et son entrée sur la ligne
+		// de commande, c'est-à-dire qu'il ne précise pas d'options d'entrée.
 		// NOTE On considère qu'il n'y a pas d'option s'il n'y a pas
-		// d'option... ou si le nom de la source est vide.
-		var noInputOptions = split.length === 1 || inputSource.length === 0; 
-		if (noInputOptions) {
+		// d'options... ou si le nom de la source est vide.
+		var cmdAndInputFromPrompt = split.length === 1 || inputSource.length === 0;
+		// Cas 3. L'utilisateur fournit la commande sur la ligne de commande
+		// mais fournit son entrée depuis le DOM.
+		var cmdFromPromtAndInputFromDom = inputSource === "din";
+		if (cmdAndInputFromDom) {
+			res = new Input(domInput.value);
+		}
+		else if (cmdAndInputFromPrompt) {
 			res = new Input(inputedCmd);
 		}
-		else if (inputSource === "din") { // din = dom input.
+		else if (cmdFromPromtAndInputFromDom) {
 			res = new Input(inputedCmd + " " + domInput.value);
+		}
+		else {
+			throw new Error("findInput - Unknown redirection option");
 		}
 		return res;
 	}
