@@ -742,13 +742,14 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	// public
 	// ------
 
-	function Console(ioLine, domInput) {
+	function Console(ioLine, domInput, domOutput) {
 		this._domElt = null; // Un singleton.		
 		this._prompt = "wc> ";
 		this._ioLine = ioLine;
 		this._input = null;
 		this._interpreter = new Interpreter();
 		this._domInput = domInput;
+		this._domOutput = domOutput;
 	}
 	
 	Console.prototype.getDomElt = function() {
@@ -809,8 +810,8 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 				that._ioLine.addInputChar(event.key);
 			}
 			else if (keyboard.isEnter(event)) {
-				var input = findInput(that._ioLine, that._domInput);
-				that._interpreter.eval(input, that._ioLine, that._prompt);
+				var io = findIo(that._ioLine, that._domInput, that._domOutput);
+				that._interpreter.eval(io.input, that._ioLine, that._prompt);
 			}
 			else if (keyboard.isArrowLeft(event)) {
 				that._ioLine.moveCursorLeft();
@@ -842,12 +843,12 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	 * de commande.
 	 * NOTE  din = dom input.
 	 */
-	function findInput(ioLine, domInput) {
+	function findIo(ioLine, domInput, domOutput) {
 		var inputStr = ioLine.readUserInput();
 		var split = inputStr.split(" < ");
 		var inputedCmd = split[0];
 		var inputSource = split[1];		
-		var res = null;
+		var res = {input: null, output: null};
 		
 		// On détermine la source de la commande et de son entrée.
 		// Trois cas:
@@ -865,16 +866,16 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 		// mais fournit son entrée depuis le DOM.
 		var cmdFromPromtAndInputFromDom = inputSource === "din";
 		if (cmdAndInputFromDom) {
-			res = new Input(domInput.value);
+			res.input = new Input(domInput.value);
 		}
 		else if (cmdAndInputFromPrompt) {
-			res = new Input(inputedCmd);
+			res.input = new Input(inputedCmd);
 		}
 		else if (cmdFromPromtAndInputFromDom) {
-			res = new Input(inputedCmd + " " + domInput.value);
+			res.input = new Input(inputedCmd + " " + domInput.value);
 		}
 		else {
-			throw new Error("findInput - Unknown redirection option");
+			throw new Error("findIo - Unknown redirection option");
 		}
 		return res;
 	}
@@ -886,12 +887,17 @@ var h_wcons = (function(Console, IoLine) {
 	return {
 		/**
 		 * Ajoute une console dans l'élément dont l'ID est passé en paramètre.
+		 * @param {string} dinId L'id de l'entrée DOM (din = Dom INput).
+		 * @param {string} doutId L'id de la sortie DOM (dout = Dom OUTput).
 		 * @returns {JConsole} La console qui vient d'être ajoutée au DOM.
 		 */
-		appendTo: function(id, inputId) {
+		appendTo: function(id, dinId, doutId) {
+			var domInput = document.getElementById(dinId);
+			var domOutput = document.getElementById(doutId);
+			
 			var ioLine = new IoLine();
-			var domInput = document.getElementById(inputId);
-			var jcons = new Console(ioLine, domInput);
+			
+			var jcons = new Console(ioLine, domInput, domOutput);
 			jconsDomElt = jcons.getDomElt();
 			ioLine.printPrompt(jcons.getPrompt());
 			
