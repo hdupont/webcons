@@ -842,6 +842,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	 * @returns {Input} L'entrée utilisateur utilisable par l'interpréteur
 	 * de commande.
 	 * NOTE  din = dom input.
+	 * TODO Faire le appendTo de ioLine sur le dout et on a tout gratuitement. 
 	 */
 	function findIo(ioLine, domInput, domOutput) {
 		var io = {input: null, output: null};
