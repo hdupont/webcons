@@ -802,10 +802,12 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 				that._ioLine.removeChar();
 			}
 			else if (keyboard.isEnd(event)) {
+				event.preventDefault();
 				 that._ioLine.moveCursorToEnd();
 			}
 			else if (keyboard.isHome(event)) {
-				 that._ioLine.moveCursorToBeginning();
+				event.preventDefault();
+				that._ioLine.moveCursorToBeginning();
 			}
 		});
 	}
