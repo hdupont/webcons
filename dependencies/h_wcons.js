@@ -596,12 +596,12 @@ ns_wcons.Input = (function(parseTk) {
 		return token;
 	};
 	Input.prototype.readChar = function() {
-		var character = this._str[index];
+		var character = this._str[this._index];
 		this._index++;
 		return character;
 	};
 	Input.prototype.isEmpty = function() {
-		return this._str.length === 0;
+		return this._index === this._str.length;
 	};
 	Input.prototype.toString = function() {
 		return this._index > 0 ? this._str.slice(this._index) : "";
@@ -787,9 +787,6 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 			}
 			else if (keyboard.isEnter(event)) {
 				var input = findInput(that._ioLine, that._domInput);
-				if (input.matchToken(2, "<")) {
-					console.log("&&& <");
-				}
 				that._interpreter.eval(input, that._ioLine, that._prompt);
 			}
 			else if (keyboard.isArrowLeft(event)) {
