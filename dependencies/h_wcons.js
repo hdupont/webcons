@@ -811,7 +811,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 			}
 			else if (keyboard.isEnter(event)) {
 				var io = findIo(that._ioLine, that._domInput, that._domOutput);
-				that._interpreter.eval(io.input, that._ioLine, that._prompt);
+				that._interpreter.eval(io.input, io.output, that._prompt);
 			}
 			else if (keyboard.isArrowLeft(event)) {
 				that._ioLine.moveCursorLeft();
@@ -877,6 +877,8 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 		else {
 			throw new Error("findIo - Unknown redirection option");
 		}
+		
+		res.output = ioLine;
 		return res;
 	}
 	
