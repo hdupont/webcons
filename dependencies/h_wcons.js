@@ -353,8 +353,7 @@ ns_wcons.LineDomView = (function() {
 	// private
 	// -------
 	
-	function buildCharDomElt(that, consChar) {
-		var c = consChar.getChar();
+	function buildCharDomElt(that, c) {
 		if (c === "" || c === " ") {
 			c = "&nbsp";
 		}
@@ -508,7 +507,7 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 		var consChar = new Character(character);
 		self._chars.splice(self._cursorIndex, 0, consChar);
 		self._cursorIndex++;
-		self._domView.addChar(consChar, this._cursorIndex);
+		self._domView.addChar(consChar.getChar(), this._cursorIndex);
 	};
 
 	function addNTimes(self, n, character) {
