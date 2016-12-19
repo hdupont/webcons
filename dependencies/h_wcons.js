@@ -317,6 +317,12 @@ ns_wcons.LineDomView = (function() {
 		this._cursorElement = null;
 		
 	}
+	/**
+	 * NOTE On ajoute tous les éléments des caractères dans le DOM puis on
+	 * initialise le curseur en le faisant pointer sur un des éléments.
+	 * TODO Supprimer updateLine(). Initialiser le curseur lors de la création
+	 * de la LineDomView.
+	 */
 	LineDomView.prototype.updateLine = function(chars, cursorIndex, prefix) {
 		this._domContainer.innerHTML = prefix ? prefix : "";
 		
