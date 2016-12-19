@@ -85,7 +85,7 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 	};
 
 	CommandApi.prototype.printChar = function(character) {
-		this._ioLine.addOutputChar(character);
+		this._ioLine.addChar(character);
 	};
 	
 	CommandApi.prototype.newLine = function() {
@@ -409,7 +409,7 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	
 	// Affichage
 	
-	IoLine.prototype.addOutputChar = function(character) {
+	IoLine.prototype.addChar = function(character) {
 		if (character === "\n") {
 			this.moveForward();
 			this._firstEditableChar = 0;
@@ -424,7 +424,7 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 		var chars = [Character.createEolChar()];
 		for (var i = 0; i < str.length; i++) {
 			var char = str[i];
-			this.addOutputChar(char);
+			this.addChar(char);
 		}
 	};
 	IoLine.prototype.printPrompt = function(str) {
@@ -792,7 +792,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	function addKeyboadListener(that) {
 		that._domElt.addEventListener("keydown", function(event) {
 			if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
-				that._ioLine.addOutputChar(event.key);
+				that._ioLine.addChar(event.key);
 			}
 			else if (keyboard.isEnter(event)) {
 				var io = findIo(that._ioLine, that._domInput, that._domOutput);
