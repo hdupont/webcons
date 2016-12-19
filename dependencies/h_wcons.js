@@ -470,11 +470,11 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	};
 	IoLine.prototype.moveCursorToEnd = function() {
 		this._cursorIndex = this._chars.length - 1;
-		updateWithInputChars(this);
+		this._domView.positionCursor(this._cursorIndex);
 	};
 	IoLine.prototype.moveCursorToBeginning = function() {
 		this._cursorIndex = this._firstEditableChar;
-		updateWithInputChars(this);
+		this._domView.positionCursor(this._cursorIndex);
 	};
 	// Abandonne son contenu et avance
 	IoLine.prototype.moveForward = function() {
