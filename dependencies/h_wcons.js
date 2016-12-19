@@ -174,7 +174,7 @@ ns_wcons.Command = (function(CommandApi, CommandExitException) {
 		return this._name;
 	};
 	// L'input qui a déclenché l'appelle et la ligne permettant les affichages.
-	Command.prototype.onInput = function(input, ioLine, helpCmd) {
+	Command.prototype.exec = function(input, ioLine, helpCmd) {
 		var api = new CommandApi(this, input, ioLine, helpCmd);
 		var cmdReturn = this.executeHandler(api);
 		if (cmdReturn === api.quit) {
@@ -697,7 +697,7 @@ ns_wcons.Interpreter = (function(Commands, CommandApi) {
 		// NOTE La commande gère ses output. Elle prend la main sur la
 		// ioLine pour s'en servire pour afficher ce qu'elle veut.
 		input.skipSpaces(); 
-		loadedCommand.onInput(input, ioLine, this._helpCommands.get(cmdName));
+		loadedCommand.exec(input, ioLine, this._helpCommands.get(cmdName));
 		
 		// On fait ce qu'il faut après que la commande a fini de
 		// s'exécuter.
