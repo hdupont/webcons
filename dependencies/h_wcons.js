@@ -409,9 +409,6 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	
 	// Affichage
 	
-	IoLine.prototype.addInputChar = function(character) {
-		addChar(this, character);
-	};
 	IoLine.prototype.addOutputChar = function(character) {
 		if (character === "\n") {
 			this.moveForward();
@@ -795,7 +792,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	function addKeyboadListener(that) {
 		that._domElt.addEventListener("keydown", function(event) {
 			if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
-				that._ioLine.addInputChar(event.key);
+				that._ioLine.addOutputChar(event.key);
 			}
 			else if (keyboard.isEnter(event)) {
 				var io = findIo(that._ioLine, that._domInput, that._domOutput);
