@@ -792,25 +792,22 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 		// DOM.
 		// NOTE Possibilité offerte si l'utilisateur tape sur la ligne de commande
 		// seulement une option d'entrée.
-		// NOTE cDiD: command Dom input Dom
-		var cDiD = inputStr === "< din";
+		var cmdLineFromDin = inputStr === "< din";
 		// Cas 2. L'utilisateur fournit la commande et son entrée sur la ligne
 		// de commande, c'est-à-dire qu'il ne précise pas d'options d'entrée.
 		// NOTE On considère qu'il n'y a pas d'option s'il n'y a pas
 		// d'options... ou si le nom de la source est vide.
-		// NOTE cPiP: command Prompt input Prompt
-		var cPiP = split.length === 1 || inputSource.length === 0;
+		var cmdLineFromPrompt = split.length === 1 || inputSource.length === 0;
 		// Cas 3. L'utilisateur fournit la commande sur la ligne de commande
 		// mais fournit son entrée depuis le DOM.
-		// NOTE cPiD: command Prompt input Dom
-		var cPiD = inputSource === "din";
-		if (cDiD) {
+		var cmdFromPromptAndInputFromDin = inputSource === "din";
+		if (cmdLineFromDin) {
 			io.input = new Input(domInput.value);
 		}
-		else if (cPiP) {
+		else if (cmdLineFromPrompt) {
 			io.input = new Input(inputedCmd);
 		}
-		else if (cPiD) {
+		else if (cmdFromPromptAndInputFromDin) {
 			io.input = new Input(inputedCmd + " " + domInput.value);
 		}
 		else {
