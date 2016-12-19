@@ -325,7 +325,7 @@ ns_wcons.LineDomView = (function() {
 			domElt = buildCharDomElt(self, consChar);
 			self._domContainer.appendChild(domElt);
 		});
-		positionCursor(this, cursorIndex);
+		this.positionCursor(cursorIndex);
 		this._domContainer.scrollIntoView();
 	};
 	
@@ -343,17 +343,17 @@ ns_wcons.LineDomView = (function() {
 		this._domContainer.innerHTML = content;
 	};
 	
-	// private
-	// -------
-	
-	function positionCursor(self, cursorIndex) {
-		if (self._cursorElement) {
-			self._cursorElement.style.backgroundColor = "";
+	LineDomView.prototype.positionCursor = function(cursorIndex) {
+		if (this._cursorElement) {
+			this._cursorElement.style.backgroundColor = "";
 		}
 		
-		self._cursorElement = self._domContainer.children[cursorIndex];
-		self._cursorElement.style.backgroundColor = "yellow";
-	}
+		this._cursorElement = this._domContainer.children[cursorIndex];
+		this._cursorElement.style.backgroundColor = "yellow";
+	};
+	
+	// private
+	// -------
 	
 	function buildCharDomElt(that, consChar) {
 		var c = consChar.getChar();
