@@ -19,7 +19,7 @@
  * 
  * Les Entrées/Sorties
  * -------------------
- * L'utilisateur tape une suite de caractères (Character) sur la ligne de 
+ * L'utilisateur tape une suite de caractères sur la ligne de 
  * commande (IoLine) qui délègue l'affichage à sa vue (LineDomView).
  * La ligne de commande est équipée d'un curseur et est éditable, l'utilisateur
  * peut déplacer le curseur et procéder à des ajouts ou des suppression de
@@ -257,33 +257,6 @@ ns_wcons.Commands = (function(Command) {
 })(ns_wcons.Command);
 
 /**
- * ----------------
- * @class Character
- * ----------------
- * Un Character représente un caractère tapé par l'utilisateur.
- */
-ns_wcons.Character = (function() {
-	
-	// public
-	// ------
-	
-	function Character(character) {
-		this._character = character;
-		this._isEol = false;
-	}
-	Character.prototype.getChar = function() {
-		return this._character ? this._character: "";
-	};
-	Character.createEolChar = function() {
-		var eol = new Character(); // un espace
-		eol._isEol = true;
-		return eol;
-	}
-	
-	return Character;	
-})();
-
-/**
  * ------------------
  * @class LineDomView
  * ------------------
@@ -358,14 +331,12 @@ ns_wcons.LineDomView = (function() {
  * Elle gère le curseur, affiche les caractères tapé par l'utilisateur
  * et lit ce qui a été affiché entre deux pression de la touche "Entrée".
  */
-ns_wcons.IoLine = (function(Character, LineDomView) {
+ns_wcons.IoLine = (function(LineDomView) {
 	
 	// public
 	// ------
 	
 	function IoLine(prefix) {
-		var eol = Character.createEolChar();
-		
 		this._chars = [];
 		this._cursorIndex = 0; // Pointe sur eol.
 		this._prefix = prefix ? prefix : "";
@@ -384,8 +355,7 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	IoLine.prototype.readUserInput = function() {
 		var str = "";
 		for (var i = this._firstEditableChar; i < this._chars.length; i++) {
-			var consChar = this._chars[i];
-			str += consChar.getChar();
+			str += this._chars[i];
 		}
 		
 		return str;
@@ -477,10 +447,9 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	}
 	
 	function addChar(self, character) {
-		var consChar = new Character(character);
-		self._chars.splice(self._cursorIndex, 0, consChar);
+		self._chars.splice(self._cursorIndex, 0, character);
 		self._cursorIndex++;
-		self._domView.addChar(consChar.getChar(), this._cursorIndex);
+		self._domView.addChar(character, this._cursorIndex);
 	};
 
 	function addNTimes(self, n, character) {
@@ -506,7 +475,7 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	}
 	
 	return IoLine;	
-})(ns_wcons.Character, ns_wcons.LineDomView);
+})(ns_wcons.LineDomView);
 
 /**
  * ------------
