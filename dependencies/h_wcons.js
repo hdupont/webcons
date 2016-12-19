@@ -451,14 +451,14 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 			return;
 		}
 		this._cursorIndex--;
-		updateWithInputChars(this);
+		this._domView.positionCursor(this._cursorIndex);
 	};
 	IoLine.prototype.moveCursorRight = function() {
 		if (this._cursorIndex === this._chars.length - 1) {
 			return;
 		}
 		this._cursorIndex++;
-		updateWithInputChars(this);
+		this._domView.positionCursor(this._cursorIndex);
 	};
 	IoLine.prototype.removeChar = function() {
 		if (this._cursorIndex === 0 || this._cursorIndex === this._firstEditableChar) {
