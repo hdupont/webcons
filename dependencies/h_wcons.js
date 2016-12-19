@@ -407,7 +407,7 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 		return str;
 	};
 	
-	// Affichage
+	// Affichage, édition
 	
 	IoLine.prototype.addChar = function(character) {
 		if (character === "\n") {
@@ -437,8 +437,16 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 		}
 		this.moveForward();
 	};
+	IoLine.prototype.removeChar = function() {
+		if (this._cursorIndex === 0 || this._cursorIndex === this._firstEditableChar) {
+			return;
+		}
+		this._chars.splice(this._cursorIndex - 1, 1);
+		this._domView.removeCharBeforeCursor(this._cursorIndex);
+		this._cursorIndex--;
+	};
 	
-	// Mouvements et édition
+	// Déplacements
 	
 	IoLine.prototype.moveCursorLeft = function() {
 		if (this._cursorIndex === 0 || this._cursorIndex === this._firstEditableChar) {
@@ -453,14 +461,6 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 		}
 		this._cursorIndex++;
 		this._domView.positionCursor(this._cursorIndex);
-	};
-	IoLine.prototype.removeChar = function() {
-		if (this._cursorIndex === 0 || this._cursorIndex === this._firstEditableChar) {
-			return;
-		}
-		this._chars.splice(this._cursorIndex - 1, 1);
-		this._domView.removeCharBeforeCursor(this._cursorIndex);
-		this._cursorIndex--;
 	};
 	IoLine.prototype.moveCursorToEnd = function() {
 		this._cursorIndex = this._chars.length - 1;
@@ -483,11 +483,6 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	IoLine.prototype.appendTo = function(consoleNode) {
 		this._consoleDomElement = consoleNode;
 		addNewDomView(this);
-	};
-	IoLine.prototype.onCursorUpdate = function(character) {
-		// TODO
-		// plutot que d'appeller directement la vue dans addChar,
-		// on l'inscrit ici à l'événement addChar
 	};
 	
 	// private
