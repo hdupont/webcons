@@ -366,7 +366,7 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	function IoLine(prefix) {
 		var eol = Character.createEolChar();
 		
-		this._chars = [eol];
+		this._chars = [];
 		this._cursorIndex = 0; // Pointe sur eol.
 		this._prefix = prefix ? prefix : "";
 		this._domView = null;
@@ -383,7 +383,7 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	 */
 	IoLine.prototype.readUserInput = function() {
 		var str = "";
-		for (var i = this._firstEditableChar; i < this._chars.length - 1; i++) {
+		for (var i = this._firstEditableChar; i < this._chars.length; i++) {
 			var consChar = this._chars[i];
 			str += consChar.getChar();
 		}
@@ -405,7 +405,6 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	};
 	IoLine.prototype.print = function(str) {
 		clearChars(this);
-		var chars = [Character.createEolChar()];
 		for (var i = 0; i < str.length; i++) {
 			var char = str[i];
 			this.addChar(char);
@@ -473,9 +472,7 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 	// -------
 	
 	function clearChars(self) {
-		while(self._chars.length > 1) {
-			self._chars.shift();
-		}
+		self._chars = [];
 		self._cursorIndex = 0
 	}
 	
