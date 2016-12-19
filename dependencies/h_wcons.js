@@ -215,34 +215,18 @@ ns_wcons.Command = (function(CommandApi, CommandExitException) {
 })(ns_wcons.CommandApi, ns_wcons.CommandExitException);
 
 /**
- * --------------------
- * @class InlineCommand
- * --------------------
- * Une InlineCommand est une commande qui retourne immédiatement un résultat
- * (affiché par la console) et qui repasse la main à la console. 
- */
-ns_wcons.InlineCommand = (function(Command) {
-	function InlineCommand(name, handler) {
-		Command.call(this, name, handler);
-	}
-	InlineCommand.prototype = new Command();
-	
-	return InlineCommand
-})(ns_wcons.Command);
-
-/**
  * ---------------
  * @class Commands
  * ---------------
  * Une Commands est une liste de Command.  
  */
-ns_wcons.Commands = (function(InlineCommand) {
+ns_wcons.Commands = (function(Command) {
 	
 	function Commands() {
 		this._commands = [];
 	}
 	Commands.prototype.add = function(name, handler) {
-		var inlineCmd = new InlineCommand(name, handler);
+		var inlineCmd = new Command(name, handler);
 		this._commands.push(inlineCmd);
 	};
 	Commands.prototype.get = function(name) {
@@ -270,7 +254,7 @@ ns_wcons.Commands = (function(InlineCommand) {
 	};
 	
 	return Commands;
-})(ns_wcons.InlineCommand);
+})(ns_wcons.Command);
 
 /**
  * ----------------
