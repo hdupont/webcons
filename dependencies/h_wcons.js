@@ -321,23 +321,6 @@ ns_wcons.LineDomView = (function() {
 		domElt.appendChild(this._cursorElement);
 		
 	}
-	/**
-	 * NOTE On ajoute tous les éléments des caractères dans le DOM puis on
-	 * initialise le curseur en le faisant pointer sur un des éléments.
-	 * TODO Supprimer updateLine(). Initialiser le curseur lors de la création
-	 * de la LineDomView.
-	 */
-	LineDomView.prototype.updateLine = function(chars, cursorIndex, prefix) {
-		this._domContainer.innerHTML = prefix ? prefix : "";
-		
-		var self = this;
-		chars.forEach(function(consChar, index) {
-			domElt = buildCharDomElt(self, consChar);
-			self._domContainer.appendChild(domElt);
-		});
-		this.positionCursor(cursorIndex);
-		this._domContainer.scrollIntoView();
-	};
 	
 	/**
 	 * Ajoute le caractère devant le curseur.
@@ -533,14 +516,6 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 			addChar(self, character)
 		}
 	};
-	
-	function updateWithInputChars(self) {
-		self._domView.updateLine(self._chars, self._cursorIndex, self._prefix);
-	}
-
-	function updateWithOutputChars(chars) {
-		self._domView.updateLine(chars, self._cursorIndex, "");
-	}
 	
 	function addNewDomView(self, cursorPosition) {
 		if (self._consoleDomElement === null || typeof self._consoleDomElement === "undefined") {
