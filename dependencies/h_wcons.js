@@ -311,22 +311,22 @@ ns_wcons.LineDomView = (function() {
 	// public
 	// ------
 	
+	/**
+	 * Créer une LineDomView équipée d'un curseur placé au début.
+	 */
 	function LineDomView(domElt) {
 		this._domContainer = domElt;
 		this._prefix = "";
-		
-		this._cursorElement = document.createElement("span");
-		this._cursorElement.innerHTML = "&nbsp";
-		this._cursorElement.style.backgroundColor = "yellow";
+		this._cursorElement = buildCharDomElt("");
 		domElt.appendChild(this._cursorElement);
-		
+		this.positionCursor(0);
 	}
 	
 	/**
 	 * Ajoute le caractère devant le curseur.
 	 */
 	LineDomView.prototype.addChar = function(c, cursorIndex) {
-		var charElt = buildCharDomElt(self, c);
+		var charElt = buildCharDomElt(c);
 		this._domContainer.insertBefore(charElt, this._cursorElement);
 	};
 	LineDomView.prototype.removeCursor = function(cursorPosition) {
@@ -353,7 +353,7 @@ ns_wcons.LineDomView = (function() {
 	// private
 	// -------
 	
-	function buildCharDomElt(that, c) {
+	function buildCharDomElt(c) {
 		if (c === "" || c === " ") {
 			c = "&nbsp";
 		}
