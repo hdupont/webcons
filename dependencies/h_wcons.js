@@ -352,6 +352,11 @@ ns_wcons.LineDomView = (function() {
 		this._cursorElement.style.backgroundColor = "yellow";
 	};
 	
+	LineDomView.prototype.removeCharBeforeCursor = function(cursorIndex) {		
+		var elementToRemove = this._domContainer.children[cursorIndex - 1];
+		this._domContainer.removeChild(elementToRemove);
+	};
+	
 	// private
 	// -------
 	
@@ -465,8 +470,8 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 			return;
 		}
 		this._chars.splice(this._cursorIndex - 1, 1);
+		this._domView.removeCharBeforeCursor(this._cursorIndex);
 		this._cursorIndex--;
-		updateWithInputChars(this);
 	};
 	IoLine.prototype.moveCursorToEnd = function() {
 		this._cursorIndex = this._chars.length - 1;
