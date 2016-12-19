@@ -314,7 +314,11 @@ ns_wcons.LineDomView = (function() {
 	function LineDomView(domElt) {
 		this._domContainer = domElt;
 		this._prefix = "";
-		this._cursorElement = null;
+		
+		this._cursorElement = document.createElement("span");
+		this._cursorElement.innerHTML = "&nbsp";
+		this._cursorElement.style.backgroundColor = "yellow";
+		domElt.appendChild(this._cursorElement);
 		
 	}
 	/**
@@ -552,7 +556,6 @@ ns_wcons.IoLine = (function(Character, LineDomView) {
 		lineDomElt.setAttribute("kind", "iolineview")
 		self._domView = new LineDomView(lineDomElt);
 		self._consoleDomElement.appendChild(lineDomElt);
-		updateWithInputChars(self);
 	}
 	
 	return IoLine;	
