@@ -775,6 +775,8 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 				// où la commande commencera ses affichages.
 				that._ioLine.moveForward();
 				
+				// TODO A qui d'aller à la ligne ?
+				// Les cmds doivent faire un println
 				that._interpreter.eval(io.input, io.output);
 				that._ioLine.moveForward();
 				that._ioLine.printPrompt(that._prompt);
