@@ -771,8 +771,8 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 			else if (keyboard.isEnter(event)) {
 				var io = findIo(that._ioLine, that._domInput, that._domIoLine);
 				
-				// Une fois les IO déterminée, on passe sur une nouvelle ligne
-				// la commande commencera ses affichages.
+				// Une fois les IO déterminées, on passe sur une nouvelle ligne
+				// où la commande commencera ses affichages.
 				that._ioLine.moveForward();
 				
 				that._interpreter.eval(io.input, io.output);

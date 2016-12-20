@@ -1,5 +1,5 @@
 ns_wconsapp.cmds.echo = function(api) {
-	api.println(api.inputString());
+	api.print(api.inputString());
 }
 
 ns_wconsapp.cmds.help.echo = function(api) {
