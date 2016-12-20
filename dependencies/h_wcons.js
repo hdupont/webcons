@@ -307,6 +307,10 @@ ns_wcons.LineDomView = (function() {
 		this._domContainer.removeChild(elementToRemove);
 	};
 	
+	LineDomView.prototype.scrollIntoTheView = function() {
+		this._domContainer.scrollIntoView();
+	};
+	
 	// private
 	// -------
 	
@@ -429,6 +433,10 @@ ns_wcons.IoLine = (function(LineDomView) {
 		clearChars(this);
 		this._prefix = "";
 		addNewDomView(this, prevCursorPosition);
+	};
+	
+	IoLine.prototype.scrollIntoTheView = function() {
+		this._domView.scrollIntoTheView();
 	};
 	
 	// ???
@@ -780,6 +788,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 				that._interpreter.eval(io.input, io.output);
 				that._ioLine.moveForward();
 				that._ioLine.printPrompt(that._prompt);
+				that._ioLine.scrollIntoTheView();
 			}
 			else if (keyboard.isArrowLeft(event)) {
 				that._ioLine.moveCursorLeft();
