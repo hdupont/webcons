@@ -515,7 +515,7 @@ ns_wcons.Input = (function(parseTk) {
 		// On fait pointer this._index sur le caractère qui suit le token lu. 
 		// NOTE peekToken ne modifie pas la chaine, donc on commence par se
 		// placer sur le premier caractère du token avec skipSpaces.
-		var index = parseTk.skipToken(this._str, 0);
+		var index = parseTk.skipToken(this._str, this._index);
 		if (index < 0 || index >= this._str.length) {
 			this._index = -1;
 		}
@@ -577,7 +577,7 @@ ns_wcons.Input = (function(parseTk) {
 		return this._index >= this._str.length;
 	};
 	Input.prototype.toString = function() {
-		return this._index > 0 ? this._str.slice(this._index) : "";
+		return (this._index >= 0 ? this._str.slice(this._index) : "");
 	};
 	Input.prototype.skipSpaces = function() {
 		var index = parseTk.skipSpaces(this._str, this._index);
@@ -805,6 +805,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 		var interpreterInputStr = "";
 		var userInputStr = ioLine.readUserInput();
 		var tmpInput = new Input(userInputStr);
+		h_log.debug("findIo - tmpInput.toString(): " + tmpInput.toString());
 		var firstToken = tmpInput.readToken();
 		
 		// On détermine l'entrée de l'interpréteur.
