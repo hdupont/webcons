@@ -541,10 +541,28 @@ ns_wcons.Input = (function(parseTk) {
 	 * @returns {string} Le contenu de la ligne lue. 
 	 */
 	Input.prototype.readLine = function() {
+		var str = this.readUntil("\n");
+		
+		// On lit le séparateur de ligne si ce n'est pas la dernière ligne.
+		if (! this.isEmpty()) {
+			this.readChar();
+		}
+		
+		return str;
+	};
+	
+	/**
+	 * Lit l'input jusqu'au caractère passé en paramètre (non compris)
+	 * NOTE C'est au client de gérer les sauts de ligne.
+	 * @returns {string} Le contenu de la ligne lue. 
+	 */
+	Input.prototype.readUntil = function(stopChar) {
 		var line = "";
 		while (! this.isEmpty()) {
 			c = this.readChar();
-			if (c === "\n") {
+			if (c === stopChar) {
+				// On remet le caractère à sa place et on s'en va.
+				this._index--;
 				break;
 			}
 			else {
@@ -554,6 +572,7 @@ ns_wcons.Input = (function(parseTk) {
 		
 		return line;
 	};
+	
 	Input.prototype.isEmpty = function() {
 		return this._index >= this._str.length;
 	};
@@ -596,14 +615,13 @@ ns_wcons.Interpreter = (function(Commands, CommandApi) {
 		
 		return names;
 	};
-	Interpreter.prototype.eval = function(input, ioLine, prompt) {
+	Interpreter.prototype.eval = function(input, ioLine) {
 		// On lit le nom de la commande et on avance le curseur d'une
 		// ligne.
 		// NOTE On avance le curseur pour que la commande commence ses
 		// affichage sur une ligne vierge. On va lui passer l'ioLine et
 		// elle s'en servira pour afficher ce qu'elle veut.
 		var cmdName = input.readToken();
-		ioLine.moveForward();
 		
 		// On essaie de charger une commande. Deux cas:
 		if (cmdName === "help") {
@@ -654,7 +672,6 @@ ns_wcons.Interpreter = (function(Commands, CommandApi) {
 		// s'exécuter.
 		if (loadedCommand.quitted()) {
 			var cmdApi = new CommandApi(null, input, ioLine);
-			ioLine.printPrompt(prompt);
 		}
 	};
 
@@ -673,14 +690,14 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	// public
 	// ------
 
-	function Console(ioLine, domInput, domOutput) {
+	function Console(ioLine, domInput, domIoLine) {
 		this._domElt = null; // Un singleton.		
 		this._prompt = "wc> ";
 		this._ioLine = ioLine;
 		this._input = null;
 		this._interpreter = new Interpreter();
 		this._domInput = domInput;
-		this._domOutput = domOutput;
+		this._domIoLine = domIoLine;
 	}
 	
 	Console.prototype.getDomElt = function() {
@@ -741,8 +758,15 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 				that._ioLine.addChar(event.key);
 			}
 			else if (keyboard.isEnter(event)) {
-				var io = findIo(that._ioLine, that._domInput, that._domOutput);
-				that._interpreter.eval(io.input, io.output, that._prompt);
+				var io = findIo(that._ioLine, that._domInput, that._domIoLine);
+				
+				// Une fois les IO déterminée, on passe sur une nouvelle ligne
+				// la commande commencera ses affichages.
+				that._ioLine.moveForward();
+				
+				that._interpreter.eval(io.input, io.output);
+				that._ioLine.moveForward();
+				that._ioLine.printPrompt(that._prompt);
 			}
 			else if (keyboard.isArrowLeft(event)) {
 				that._ioLine.moveCursorLeft();
@@ -770,85 +794,90 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	 * directement de la ligne de commande et/ou du DOM.
 	 * @param {IoLine} ioLine L'objet permettant d'effectuer les E/S.
 	 * @param {HTMLElement} domInput L'entrée qui lit depuis le DOM.
+	 * @param {IoLine} domIoLine La sortie qui écrir sur le DOM.
 	 * @returns {Input} L'entrée utilisateur utilisable par l'interpréteur
 	 * de commande.
 	 * NOTE  din = dom input.
 	 * TODO Faire le appendTo de ioLine sur le dout et on a tout gratuitement. 
 	 */
-	function findIo(ioLine, domInput, domOutput) {
+	function findIo(ioLine, domInput, domIoLine) {
 		var io = {input: null, output: null};
 		var interpreterInputStr = "";
 		var userInputStr = ioLine.readUserInput();
 		var tmpInput = new Input(userInputStr);
 		var firstToken = tmpInput.readToken();
-		console.log("firstToken: " + firstToken);
 		
+		// On détermine l'entrée de l'interpréteur.
+		// NOTE L'entrée peut provenir de la ligne du commande ou du DOM ou des
+		// deux.
+		
+		// NOTE "<" marque le début des options d'IO.
 		if (firstToken === "<") {
 			// Cas 1. On lit toute la ligne de commande depuis la source
 			// indiquée après le "<".
 			
-			// On détermine la source de la ligne de commande.
-			var cmdLineSrc = tmpInput.readToken();
-			interpreterInputStr = new Input(domInput.value);
+			// On lit le nom de la source de la ligne de commande.
+			// NOTE Pour l'instant la seule source est "din"
+			tmpInput.readToken();
+			// ASSERT Soit le token suivant est ">", soit c'est fini.
+			interpreterInputStr = domInput.value;
+			h_log.info("findIo - Everything from the DOM");
 		}
 		else {
 			// Cas 2. On lit la commande depuit le prompt. Il faut déterminer
 			// la source des arguements de la commande.
 			var cmdName = firstToken;
+			h_log.info("findIo - cmd: " + cmdName);
 			
 			// On détermine la source des arguements de la commande.
 			var cmdArgsSrc = null
 			var secondToken = tmpInput.readToken();
 			if (secondToken === "<") {
-				// Cas 2.1. La source est indiquée après le "<"
-				cmdArgsSrc = domInput.value;
+				// Cas 2.1. La source des arguments de la commande est
+				// indiquée après le "<"
 				
+				// On lit le nom de la source des argument de la commande.
+				tmpInput.readToken();
+				// ASSERT Soit le token suivant est ">", soit c'est fini.
+				
+				cmdArgsSrc = domInput.value;
+				h_log.info("findIo - Args from the DOM.");
 			}
 			else {
-				// Cas 2.2. La source est indiquée après le nom de la commande.
-				// TODO coder un readUntil en l'occurrence ">"
+				// Cas 2.2. La source est indiquée après le nom de la commande,
+				// plus précisément, entre le nom de la commande et le
+				// caractère qui marque le début des options de sortie.
 				
-				var outputTokenIndex = tmpInput.findTokenIndex(">");
-				if (outputTokenIndex < 0) {
-					cmdArgsSrc = tmpInput.toString();
-				}
+				// On lit les arguments de la commande depuis la ligne de
+				// commande.
+				var cmdArgsSrc = tmpInput.readUntil(">");
+				// ASSERT Soit le token suivant est ">", soit c'est fini.
+				
+				h_log.info("findIo - Args from the prompt.");
 			}
+			
 			interpreterInputStr = cmdName + " " + cmdArgsSrc;
 		}
+		// ASSERT Soit le token suivant est ">", soit c'est fini.
 
-//		// On détermine la source de la commande et de son entrée.
-//		// Trois cas:
-//		// Cas 1. L'utilisateur fournit la commande et son entrée dans l'entrée
-//		// DOM.
-//		// NOTE Possibilité offerte si l'utilisateur tape sur la ligne de commande
-//		// seulement une option d'entrée.
-//		var cmdLineFromDin = inputStr === "< din";
-//		// Cas 2. L'utilisateur fournit la commande et son entrée sur la ligne
-//		// de commande, c'est-à-dire qu'il ne précise pas d'options d'entrée.
-//		// NOTE On considère qu'il n'y a pas d'option s'il n'y a pas
-//		// d'options... ou si le nom de la source est vide.
-//		var cmdLineFromPrompt = split.length === 1 || inputSource.length === 0;
-//		// Cas 3. L'utilisateur fournit la commande sur la ligne de commande
-//		// mais fournit son entrée depuis le DOM.
-//		var cmdFromPromptAndInputFromDin = inputSource === "din";
-//		if (cmdLineFromDin) {
-//			io.input = new Input(domInput.value);
-//		}
-//		else if (cmdLineFromPrompt) {
-//			io.input = new Input(inputedCmd);
-//		}
-//		else if (cmdFromPromptAndInputFromDin) {
-//			io.input = new Input(inputedCmd + " " + domInput.value);
-//		}
-//		else {
-//			throw new Error("findIo - Unknown redirection option");
-//		}
+		// On détermine la sortie de l'interpréteur.
+		// NOTE La sortie peut s'effectuer dans la console ou dans le DOM.
 		
-		
+		var output = null;
+		var outputMarkToken = tmpInput.readToken();
+		h_log.debug("findIo - outputMarkToken: " + outputMarkToken);
+		if (outputMarkToken && outputMarkToken === ">") {
+			output = domIoLine;
+			h_log.info("findIo - Output to the DOM.");
+		}
+		else {
+			output = ioLine;
+			h_log.info("findIo - Output to the console.");
+		}
 		
 		var io = {
 				input: new Input(interpreterInputStr),
-				output: ioLine
+				output: output
 		}
 		
 		return io;
@@ -857,7 +886,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	return Console;
 })(h_keyboardtk, ns_wcons.Interpreter, ns_wcons.Input);
 
-var h_wcons = (function(Console, IoLine) {
+var h_wcons = (function(Console, IoLine, DomOutput) {
 	return {
 		/**
 		 * Ajoute une console dans l'élément dont l'ID est passé en paramètre.
@@ -867,11 +896,14 @@ var h_wcons = (function(Console, IoLine) {
 		 */
 		appendTo: function(id, dinId, doutId) {
 			var domInput = document.getElementById(dinId);
-			var domOutput = document.getElementById(doutId);
+			var domOutputElement = document.getElementById(doutId);
+			
+			var domIoLine = new IoLine();
+			domIoLine.appendTo(domOutputElement);
 			
 			var ioLine = new IoLine();
 			
-			var jcons = new Console(ioLine, domInput, domOutput);
+			var jcons = new Console(ioLine, domInput, domIoLine);
 			jconsDomElt = jcons.getDomElt();
 			ioLine.printPrompt(jcons.getPrompt());
 			
@@ -883,4 +915,4 @@ var h_wcons = (function(Console, IoLine) {
 			return jcons;
 		}
 	}
-})(ns_wcons.Console, ns_wcons.IoLine);
+})(ns_wcons.Console, ns_wcons.IoLine, ns_wcons.DomOutput);

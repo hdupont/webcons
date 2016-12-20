@@ -75,7 +75,7 @@ var h_parsetk = (function() {
 		 */
 		peekToken: function(str, start) {
 			if (start > str.length - 1) {
-				"";
+				return "";
 			}
 			var index = this.skipSpaces(str, start);
 			var token = "";
