@@ -1,4 +1,5 @@
 /**
+ * NOTE Ici, les tokens sont séparés par des espaces.
  * NOTE En JavaScript les strings ne sont pas mutable donc on ne définit ici
  * que peek et pas des read.
  */
@@ -85,6 +86,10 @@ var h_parsetk = (function() {
 			return token;
 		},
 		
+		findTokenIndex: function(str, token) {
+			return str.indexOf(token);
+		},
+		
 		/**
 		 * Retourne l'indice du premier caractère du index-ième token trouvé à
 		 * partir du charactère d'indice start, avec index commençant à 1 et
@@ -97,7 +102,7 @@ var h_parsetk = (function() {
 		 * 
 		 * TODO Uniformiser l'interface. Tout le monde commence à 1 ou à zéro.
 		 */
-		findTokenIndex: function(str, index, start) {
+		findFirstTokenIndex: function(str, index, start) {
 			if (start > str.length - 1) {
 				return -1;
 			}
@@ -125,19 +130,19 @@ var h_parsetk = (function() {
 		 * Lorem ipsum dolor sit amet
 		 * 01234567890123456789012345 <- indice des caractères (commence à 0)
 		 * 1. Le premier token trouvé à partir du caractère d'indice 7
-		 * findToken: function("Lorem ipsum dolor sit amet", 1, 7)
+		 * findFirstToken: function("Lorem ipsum dolor sit amet", 1, 7)
 		 * => "psum"
 		 * 2. Le deuxième token trouvé à partir du caractère d'indice 7
-		 * findToken: function("Lorem ipsum dolor sit amet", 2, 7)
+		 * findFirstToken: function("Lorem ipsum dolor sit amet", 2, 7)
 		 * => "dolor"
 		 * 
 		 * TODO Uniformiser l'interface. Tout le monde commence à 1 ou à zéro.
 		 */
-		findToken: function(str, index, start) {
+		findFirstToken: function(str, index, start) {
 			if (start > str.length - 1) {
 				return "";
 			}
-			var firstTokenCharIndex = this.findTokenIndex(str, index, start);
+			var firstTokenCharIndex = this.findFirstTokenIndex(str, index, start);
 			if (firstTokenCharIndex === -1) {
 				return "";
 			}
