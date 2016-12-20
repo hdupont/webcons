@@ -709,10 +709,10 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	// public
 	// ------
 
-	function Console(ioLine, domInput, domIoLine) {
-		this._domElt = null; // Un singleton.		
+	function Console(consDomElt, consoleIoLine, domInput, domIoLine) {
+		this._domElt = consDomElt;		
 		this._prompt = "wc> ";
-		this._ioLine = ioLine;
+		this._ioLine = consoleIoLine;
 		this._input = null;
 		this._interpreter = new Interpreter();
 		this._domInput = domInput;
@@ -720,15 +720,6 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	}
 	
 	Console.prototype.getDomElt = function() {
-		if (this._domElt !== null) {
-			return this._domElt;
-		}
-
-		this._domElt = buildJConsoleDomElt(this);
-		addIntro(this);
-		this._ioLine.appendTo(this._domElt);
-		addKeyboadListener(this);
-
 		return this._domElt;
 	};
 	
@@ -749,22 +740,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	
 	// private
 	// -------
-	
-	function buildJConsoleDomElt(that) {
-		var outputElt = document.createElement("div");
-		outputElt.setAttribute("id", "ns_wcons");
-		
-		// Pour écouter les keypress, le div doit d’abord pouvoir recevoir le focus
-		outputElt.tabIndex = "1";  // Permet au div de pouvoir recevoir le focus
-		
-		outputElt.style.fontFamily = "courier";
-		outputElt.style.backgroundColor = "lightgrey";
-		outputElt.style.width = "100%";
-		outputElt.style.height = "20em";
-		outputElt.style.overflow = "scroll";
-		
-		return outputElt;
-	}
+
 	function addIntro(self) {
 		var helpNode = document.createElement("div");
 		helpNode.innerHTML = "Tapez cmdlist pour avoir la liste des commandes comprises par la console.<br />" +
@@ -907,6 +883,23 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 })(h_keyboardtk, ns_wcons.Interpreter, ns_wcons.Input);
 
 var h_wcons = (function(Console, IoLine, DomOutput) {
+	
+	function buildJConsoleDomElt(id) {
+		var outputElt = document.createElement("div");
+		outputElt.setAttribute("id", id);
+		
+		// Pour écouter les keypress, le div doit d’abord pouvoir recevoir le focus
+		outputElt.tabIndex = "1";  // Permet au div de pouvoir recevoir le focus
+		
+		outputElt.style.fontFamily = "courier";
+		outputElt.style.backgroundColor = "lightgrey";
+		outputElt.style.width = "100%";
+		outputElt.style.height = "20em";
+		outputElt.style.overflow = "scroll";
+		
+		return outputElt;
+	}
+	
 	return {
 		/**
 		 * Ajoute une console dans l'élément dont l'ID est passé en paramètre.
@@ -917,20 +910,21 @@ var h_wcons = (function(Console, IoLine, DomOutput) {
 		appendTo: function(id, dinId, doutId) {
 			var domInput = document.getElementById(dinId);
 			var domOutputElement = document.getElementById(doutId);
-			
+			var consDomElt = buildJConsoleDomElt("ns_wcons");
+						
 			var domIoLine = new IoLine();
 			domIoLine.appendTo(domOutputElement);
 			
 			var consoleIoLine = new IoLine();
+			consoleIoLine.appendTo(consDomElt);
 			
-			var jcons = new Console(consoleIoLine, domInput, domIoLine);
-			jconsDomElt = jcons.getDomElt();
+			var jcons = new Console(consDomElt, consoleIoLine, domInput, domIoLine);			
 			consoleIoLine.printPrompt(jcons.getPrompt());
 			
 			var container = document.getElementById(id);
-			container.appendChild(jconsDomElt);
+			container.appendChild(consDomElt);
 			
-			jconsDomElt.focus();
+			consDomElt.focus();
 			
 			return jcons;
 		}
