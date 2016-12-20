@@ -498,18 +498,17 @@ ns_wcons.Input = (function(parseTk) {
 	}
 	
 	/**
-	 * Compare le n-ième token avec str.
-	 * @param {int} n La position du token à comparer (on commence à 1).
-	 * @param {string} str La chaine à laquelle comparer le token.
-	 * @returns {bool} true si le n-ième token vaut str. false sinon.
-	 * EXAMPLE
-	 * Si this._str vaut "Lorem ipsum dolor sit amet"
-	 * input.matchToken(2, "ipsum") vaut true
+	 * Retourne le premier indice du token passé en paramètre, -1 si on en le
+	 * trouve pas.
+	 * @param {string} token Le token dont on cherche l'indice.
+	 * @returns {int} Le première indice du token cherché si on le trouve, -1
+	 * si on ne le trouve pas.
+	 * trouve pas.
 	 */
-	Input.prototype.matchToken = function(n, str) {
-		token = parseTk.findToken(this._str, n, 0);
-		return token === str;
+	Input.prototype.findTokenIndex = function(token) {
+		return parseTk.findTokenIndex(this._str, token);
 	};
+	
 	Input.prototype.readToken = function() {
 		var token = parseTk.peekToken(this._str, this._index);
 		
@@ -525,6 +524,7 @@ ns_wcons.Input = (function(parseTk) {
 		}
 		return token;
 	};
+	
 	Input.prototype.readChar = function() {
 		if (this.isEmpty()) {
 			throw new Error("readChar - Empty input");
@@ -534,6 +534,7 @@ ns_wcons.Input = (function(parseTk) {
 		this._index++;
 		return character;
 	};
+	
 	/**
 	 * Renvoi le contenu d'une ligne (sans le séparateur de ligne).
 	 * NOTE C'est au client de gérer les sauts de ligne.
@@ -776,45 +777,79 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	 */
 	function findIo(ioLine, domInput, domOutput) {
 		var io = {input: null, output: null};
+		var interpreterInputStr = "";
+		var userInputStr = ioLine.readUserInput();
+		var tmpInput = new Input(userInputStr);
+		var firstToken = tmpInput.readToken();
+		console.log("firstToken: " + firstToken);
 		
-		var inputStr = ioLine.readUserInput();
-		var split = inputStr.split(" < ");
-		var inputedCmd = split[0];
-		var ioOptions = split[1];
-		if (ioOptions) {
-			var ioSplit = ioOptions.split(" > ");
-			var inputSource = ioSplit[0];
-		}
-		
-		// On détermine la source de la commande et de son entrée.
-		// Trois cas:
-		// Cas 1. L'utilisateur fournit la commande et son entrée dans l'entrée
-		// DOM.
-		// NOTE Possibilité offerte si l'utilisateur tape sur la ligne de commande
-		// seulement une option d'entrée.
-		var cmdLineFromDin = inputStr === "< din";
-		// Cas 2. L'utilisateur fournit la commande et son entrée sur la ligne
-		// de commande, c'est-à-dire qu'il ne précise pas d'options d'entrée.
-		// NOTE On considère qu'il n'y a pas d'option s'il n'y a pas
-		// d'options... ou si le nom de la source est vide.
-		var cmdLineFromPrompt = split.length === 1 || inputSource.length === 0;
-		// Cas 3. L'utilisateur fournit la commande sur la ligne de commande
-		// mais fournit son entrée depuis le DOM.
-		var cmdFromPromptAndInputFromDin = inputSource === "din";
-		if (cmdLineFromDin) {
-			io.input = new Input(domInput.value);
-		}
-		else if (cmdLineFromPrompt) {
-			io.input = new Input(inputedCmd);
-		}
-		else if (cmdFromPromptAndInputFromDin) {
-			io.input = new Input(inputedCmd + " " + domInput.value);
+		if (firstToken === "<") {
+			// Cas 1. On lit toute la ligne de commande depuis la source
+			// indiquée après le "<".
+			
+			// On détermine la source de la ligne de commande.
+			var cmdLineSrc = tmpInput.readToken();
+			interpreterInputStr = new Input(domInput.value);
 		}
 		else {
-			throw new Error("findIo - Unknown redirection option");
+			// Cas 2. On lit la commande depuit le prompt. Il faut déterminer
+			// la source des arguements de la commande.
+			var cmdName = firstToken;
+			
+			// On détermine la source des arguements de la commande.
+			var cmdArgsSrc = null
+			var secondToken = tmpInput.readToken();
+			if (secondToken === "<") {
+				// Cas 2.1. La source est indiquée après le "<"
+				cmdArgsSrc = domInput.value;
+				
+			}
+			else {
+				// Cas 2.2. La source est indiquée après le nom de la commande.
+				// TODO coder un readUntil en l'occurrence ">"
+				
+				var outputTokenIndex = tmpInput.findTokenIndex(">");
+				if (outputTokenIndex < 0) {
+					cmdArgsSrc = tmpInput.toString();
+				}
+			}
+			interpreterInputStr = cmdName + " " + cmdArgsSrc;
 		}
+
+//		// On détermine la source de la commande et de son entrée.
+//		// Trois cas:
+//		// Cas 1. L'utilisateur fournit la commande et son entrée dans l'entrée
+//		// DOM.
+//		// NOTE Possibilité offerte si l'utilisateur tape sur la ligne de commande
+//		// seulement une option d'entrée.
+//		var cmdLineFromDin = inputStr === "< din";
+//		// Cas 2. L'utilisateur fournit la commande et son entrée sur la ligne
+//		// de commande, c'est-à-dire qu'il ne précise pas d'options d'entrée.
+//		// NOTE On considère qu'il n'y a pas d'option s'il n'y a pas
+//		// d'options... ou si le nom de la source est vide.
+//		var cmdLineFromPrompt = split.length === 1 || inputSource.length === 0;
+//		// Cas 3. L'utilisateur fournit la commande sur la ligne de commande
+//		// mais fournit son entrée depuis le DOM.
+//		var cmdFromPromptAndInputFromDin = inputSource === "din";
+//		if (cmdLineFromDin) {
+//			io.input = new Input(domInput.value);
+//		}
+//		else if (cmdLineFromPrompt) {
+//			io.input = new Input(inputedCmd);
+//		}
+//		else if (cmdFromPromptAndInputFromDin) {
+//			io.input = new Input(inputedCmd + " " + domInput.value);
+//		}
+//		else {
+//			throw new Error("findIo - Unknown redirection option");
+//		}
 		
-		io.output = ioLine;
+		
+		
+		var io = {
+				input: new Input(interpreterInputStr),
+				output: ioLine
+		}
 		
 		return io;
 	}
