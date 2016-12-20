@@ -574,7 +574,18 @@ ns_wcons.Input = (function(parseTk) {
 	};
 	
 	Input.prototype.isEmpty = function() {
-		return this._index >= this._str.length;
+		var res = false;
+		if (this._str === "") {
+			res = true
+		}
+		else if (this._index < 0) {
+			res = true
+		}
+		else if (this._index >= this._str.length) {
+			res = true;
+		}
+		
+		return res;
 	};
 	Input.prototype.toString = function() {
 		return (this._index >= 0 ? this._str.slice(this._index) : "");
@@ -838,7 +849,12 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 				// indiquée après le "<"
 				
 				// On lit le nom de la source des argument de la commande.
-				tmpInput.readToken();
+				// NOTE En pratique, pour l'instant on supprime le token "din"
+				// de l'input
+				var dinToken = tmpInput.readToken();
+				if (dinToken !== "din") {
+					throw new Error("findIo - din token expected.");
+				}
 				// ASSERT Soit le token suivant est ">", soit c'est fini.
 				
 				cmdArgsSrc = domInput.value;
@@ -846,12 +862,8 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 			}
 			else {
 				// Cas 2.2. La source est indiquée après le nom de la commande,
-				// plus précisément, entre le nom de la commande et le
-				// caractère qui marque le début des options de sortie.
-				
-				// On lit les arguments de la commande depuis la ligne de
-				// commande.
-				var cmdArgsSrc = tmpInput.readUntil(">");
+				// c'est secondToken;
+				var cmdArgsSrc = secondToken;
 				// ASSERT Soit le token suivant est ">", soit c'est fini.
 				
 				h_log.info("findIo - Args from the prompt.");
@@ -902,11 +914,11 @@ var h_wcons = (function(Console, IoLine, DomOutput) {
 			var domIoLine = new IoLine();
 			domIoLine.appendTo(domOutputElement);
 			
-			var ioLine = new IoLine();
+			var consoleIoLine = new IoLine();
 			
-			var jcons = new Console(ioLine, domInput, domIoLine);
+			var jcons = new Console(consoleIoLine, domInput, domIoLine);
 			jconsDomElt = jcons.getDomElt();
-			ioLine.printPrompt(jcons.getPrompt());
+			consoleIoLine.printPrompt(jcons.getPrompt());
 			
 			var container = document.getElementById(id);
 			container.appendChild(jconsDomElt);
