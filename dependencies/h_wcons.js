@@ -697,44 +697,7 @@ ns_wcons.Interpreter = (function(Commands, CommandApi) {
 	return Interpreter;
 })(ns_wcons.Commands,  ns_wcons.CommandApi, ns_wcons.Input);
 
-/**
- * --------------
- * @class Console
- * --------------
- * Une Console est un simulacre de console dans laquelle l'utilisateur peut
- * exécuter des commandes.
- */
-ns_wcons.Console = (function() {
-	
-	// public
-	// ------
-
-	function Console(consDomElt, consoleIoLine, domInput, domIoLine, interpreter) {
-		this._domElt = consDomElt;		
-		this._prompt = "wc> ";
-		this._ioLine = consoleIoLine;
-		this._input = null;
-		this._interpreter = interpreter;
-		this._domInput = domInput;
-		this._domIoLine = domIoLine;
-	}
-	
-	// Commandes
-	
-	Console.prototype.addCommand = function(name, handler) {
-		this._interpreter.addCommand(name, handler, false);
-	};
-	Console.prototype.addHelpCommand = function(name, handler) {
-		this._interpreter.addHelpCommand(name, handler);
-	}
-
-	
-	return Console;
-})();
-
 var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input) {
-	
-	var _prompt = "wc> ";
 	
 	function buildJConsoleDomElt(id) {
 		
@@ -903,6 +866,7 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 		 * @returns {JConsole} La console qui vient d'être ajoutée au DOM.
 		 */
 		appendTo: function(id, dinId, doutId) {
+			var prompt = "wc> ";
 			var domInput = document.getElementById(dinId);
 			var domOutputElement = document.getElementById(doutId);
 			var consDomElt = buildJConsoleDomElt("ns_wcons");
@@ -913,18 +877,17 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 			var consoleIoLine = new IoLine();
 			consoleIoLine.appendTo(consDomElt);
 			
-			var consoleInterpreter = new Interpreter();
-			var jcons = new Console(consDomElt, consoleIoLine, domInput, domIoLine, consoleInterpreter);			
-			consoleIoLine.printPrompt(_prompt);
+			var interpreter = new Interpreter();
+			consoleIoLine.printPrompt(prompt);
 			
-			addKeyboadListener(consDomElt, consoleIoLine, consoleInterpreter, domInput, domIoLine, _prompt);
+			addKeyboadListener(consDomElt, consoleIoLine, interpreter, domInput, domIoLine, prompt);
 			
 			var container = document.getElementById(id);
 			container.appendChild(consDomElt);
 			
 			consDomElt.focus();
 			
-			return jcons;
+			return interpreter;
 		}
 	}
 })(ns_wcons.Console, ns_wcons.IoLine, ns_wcons.DomOutput, ns_wcons.Interpreter, h_keyboardtk, ns_wcons.Input);
