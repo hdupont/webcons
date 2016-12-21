@@ -725,13 +725,13 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 		return outputElt;
 	}
 	
-	function addKeyboadListener(domElt, ioLine, interpreter, domInputElt, doutIoLine, prompt) {
+	function addKeyboadListener(domElt, ioLine, interpreter, din, doutIoLine, prompt) {
 		domElt.addEventListener("keydown", function(event) {
 			if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
 				ioLine.addChar(event.key);
 			}
 			else if (keyboard.isEnter(event)) {
-				var io = findIo(ioLine, domInputElt, doutIoLine);
+				var io = findIo(ioLine, din, doutIoLine);
 				
 				// Une fois les IO déterminées, on passe sur une nouvelle ligne
 				// où la commande commencera ses affichages.
@@ -765,14 +765,14 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 	 * aux options précisée par celui-ci. Les entrées peuvent provenir
 	 * directement de la ligne de commande et/ou du DOM.
 	 * @param {IoLine} ioLine L'objet permettant d'effectuer les E/S.
-	 * @param {HTMLElement} domInputElt L'entrée qui lit depuis le DOM.
+	 * @param {HTMLElement} din L'entrée qui lit depuis le DOM.
 	 * @param {IoLine} doutIoLine La sortie qui écrir sur le DOM.
 	 * @returns {Input} L'entrée utilisateur utilisable par l'interpréteur
 	 * de commande.
 	 * NOTE  din = dom input.
 	 * TODO Faire le appendTo de ioLine sur le dout et on a tout gratuitement. 
 	 */
-	function findIo(ioLine, domInputElt, doutIoLine) {
+	function findIo(ioLine, din, doutIoLine) {
 		var io = {input: null, output: null};
 		var interpreterInputStr = "";
 		var userInputStr = ioLine.readUserInput();
@@ -793,7 +793,7 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 			// NOTE Pour l'instant la seule source est "din"
 			tmpInput.readToken();
 			// ASSERT Soit le token suivant est ">", soit c'est fini.
-			interpreterInputStr = domInputElt.value;
+			interpreterInputStr = din.value;
 			h_log.info("findIo - Everything from the DOM");
 		}
 		else {
@@ -818,7 +818,7 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 				}
 				// ASSERT Soit le token suivant est ">", soit c'est fini.
 				
-				cmdArgsSrc = domInputElt.value;
+				cmdArgsSrc = din.value;
 				h_log.info("findIo - Args from the DOM.");
 			}
 			else {
@@ -867,7 +867,7 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 		 */
 		appendTo: function(id, dinId, doutId) {
 			var prompt = "wc> ";
-			var domInputElt = document.getElementById(dinId);
+			var din = document.getElementById(dinId);
 			var dout = document.getElementById(doutId);
 			var consDomElt = buildJConsoleDomElt("ns_wcons");
 						
@@ -880,7 +880,7 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 			var interpreter = new Interpreter();
 			consoleIoLine.printPrompt(prompt);
 			
-			addKeyboadListener(consDomElt, consoleIoLine, interpreter, domInputElt, doutIoLine, prompt);
+			addKeyboadListener(consDomElt, consoleIoLine, interpreter, din, doutIoLine, prompt);
 			
 			var container = document.getElementById(id);
 			container.appendChild(consDomElt);
