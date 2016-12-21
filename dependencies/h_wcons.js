@@ -868,11 +868,11 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 		appendTo: function(id, dinId, doutId) {
 			var prompt = "wc> ";
 			var domInputElt = document.getElementById(dinId);
-			var domOutputElement = document.getElementById(doutId);
+			var dout = document.getElementById(doutId);
 			var consDomElt = buildJConsoleDomElt("ns_wcons");
 						
 			var doutIoLine = new IoLine();
-			doutIoLine.appendTo(domOutputElement);
+			doutIoLine.appendTo(dout);
 			
 			var consoleIoLine = new IoLine();
 			consoleIoLine.appendTo(consDomElt);
