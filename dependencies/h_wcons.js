@@ -518,6 +518,9 @@ ns_wcons.Input = (function(parseTk) {
 	};
 	
 	Input.prototype.readToken = function() {
+		if (this.isEmpty()) {
+			return "";
+		}
 		var token = parseTk.peekToken(this._str, this._index);
 		
 		// On fait pointer this._index sur le caractère qui suit le token lu. 
@@ -885,6 +888,10 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 			// la console.
 			output = ioLine;
 			h_log.info("findIo - Output to the console.");
+		}
+		
+		if (! tmpInput.isEmpty()) {
+			throw new Error("findIo - input should be empty.");
 		}
 		
 		var io = {
