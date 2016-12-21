@@ -719,7 +719,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 		this._domIoLine = domIoLine;
 		
 		addIntro(this);
-		addKeyboadListener(this);
+		addKeyboadListener(consDomElt, consoleIoLine, this._interpreter, domInput, domIoLine, "wc> ");
 	}
 	
 	Console.prototype.getDomElt = function() {
@@ -752,37 +752,37 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 			"Tapez help suivi du nom d'une commande pour avoir de l'aide sur cette commande.";
 		self._domElt.appendChild(helpNode);
 	}
-	function addKeyboadListener(that) {
-		that._domElt.addEventListener("keydown", function(event) {
+	function addKeyboadListener(consDomElt, ioLine, interpreter, domInput, domIoLine, prompt) {
+		consDomElt.addEventListener("keydown", function(event) {
 			if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
-				that._ioLine.addChar(event.key);
+				ioLine.addChar(event.key);
 			}
 			else if (keyboard.isEnter(event)) {
-				var io = findIo(that._ioLine, that._domInput, that._domIoLine);
+				var io = findIo(ioLine, domInput, domIoLine);
 				
 				// Une fois les IO déterminées, on passe sur une nouvelle ligne
 				// où la commande commencera ses affichages.
-				that._ioLine.moveForward();
-				that._interpreter.eval(io.input, io.output);
-				that._ioLine.printPrompt(that._prompt);
-				that._ioLine.scrollIntoTheView();
+				ioLine.moveForward();
+				interpreter.eval(io.input, io.output);
+				ioLine.printPrompt(prompt);
+				ioLine.scrollIntoTheView();
 			}
 			else if (keyboard.isArrowLeft(event)) {
-				that._ioLine.moveCursorLeft();
+				ioLine.moveCursorLeft();
 			}
 			else if (keyboard.isArrowRight(event)) {
-				that._ioLine.moveCursorRight();
+				ioLine.moveCursorRight();
 			}
 			else if (keyboard.isBackspace(event)) {
-				that._ioLine.removeChar();
+				ioLine.removeChar();
 			}
 			else if (keyboard.isEnd(event)) {
 				event.preventDefault();
-				 that._ioLine.moveCursorToEnd();
+				ioLine.moveCursorToEnd();
 			}
 			else if (keyboard.isHome(event)) {
 				event.preventDefault();
-				that._ioLine.moveCursorToBeginning();
+				ioLine.moveCursorToBeginning();
 			}
 		});
 	}
