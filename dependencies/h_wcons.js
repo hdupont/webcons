@@ -725,8 +725,8 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 		return outputElt;
 	}
 	
-	function addKeyboadListener(consDomElt, ioLine, interpreter, domInput, domIoLine, prompt) {
-		consDomElt.addEventListener("keydown", function(event) {
+	function addKeyboadListener(domElt, ioLine, interpreter, domInput, domIoLine, prompt) {
+		domElt.addEventListener("keydown", function(event) {
 			if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
 				ioLine.addChar(event.key);
 			}
