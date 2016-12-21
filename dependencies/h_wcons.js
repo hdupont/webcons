@@ -889,10 +889,8 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 			output = ioLine;
 			h_log.info("findIo - Output to the console.");
 		}
-		
-		if (! tmpInput.isEmpty()) {
-			throw new Error("findIo - input should be empty.");
-		}
+		// ASSERT tmpInput ne contient plus de token
+		h_assert.assert(tmpInput.readToken() === "", "findIo - input should be empty.")
 		
 		var io = {
 				input: new Input(interpreterInputStr),
