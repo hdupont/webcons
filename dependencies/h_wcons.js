@@ -704,35 +704,20 @@ ns_wcons.Interpreter = (function(Commands, CommandApi) {
  * Une Console est un simulacre de console dans laquelle l'utilisateur peut
  * exécuter des commandes.
  */
-ns_wcons.Console = (function(keyboard, Interpreter, Input) {
+ns_wcons.Console = (function() {
 	
 	// public
 	// ------
 
-	function Console(consDomElt, consoleIoLine, domInput, domIoLine) {
+	function Console(consDomElt, consoleIoLine, domInput, domIoLine, interpreter) {
 		this._domElt = consDomElt;		
 		this._prompt = "wc> ";
 		this._ioLine = consoleIoLine;
 		this._input = null;
-		this._interpreter = new Interpreter();
+		this._interpreter = interpreter;
 		this._domInput = domInput;
 		this._domIoLine = domIoLine;
-		
-		addIntro(this);
-		addKeyboadListener(consDomElt, consoleIoLine, this._interpreter, domInput, domIoLine, "wc> ");
 	}
-	
-	Console.prototype.getDomElt = function() {
-		addIntro(this);
-		addKeyboadListener(this);
-		return this._domElt;
-	};
-	
-	// Affichage
-	
-	Console.prototype.getPrompt = function(prompt) {
-		return this._prompt;
-	};
 	
 	// Commandes
 	
@@ -741,17 +726,42 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 	};
 	Console.prototype.addHelpCommand = function(name, handler) {
 		this._interpreter.addHelpCommand(name, handler);
-	};
-	
-	// private
-	// -------
-
-	function addIntro(self) {
-		var helpNode = document.createElement("div");
-		helpNode.innerHTML = "Tapez cmdlist pour avoir la liste des commandes comprises par la console.<br />" +
-			"Tapez help suivi du nom d'une commande pour avoir de l'aide sur cette commande.";
-		self._domElt.appendChild(helpNode);
 	}
+
+	
+	return Console;
+})();
+
+var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input) {
+	
+	var _prompt = "wc> ";
+	
+	function buildJConsoleDomElt(id) {
+		
+		function addIntro(domElt) {
+			var helpNode = document.createElement("div");
+			helpNode.innerHTML = "Tapez cmdlist pour avoir la liste des commandes comprises par la console.<br />" +
+				"Tapez help suivi du nom d'une commande pour avoir de l'aide sur cette commande.";
+			domElt.appendChild(helpNode);
+		}
+		
+		var outputElt = document.createElement("div");
+		outputElt.setAttribute("id", id);
+		
+		// Pour écouter les keypress, le div doit d’abord pouvoir recevoir le focus
+		outputElt.tabIndex = "1";  // Permet au div de pouvoir recevoir le focus
+		
+		outputElt.style.fontFamily = "courier";
+		outputElt.style.backgroundColor = "lightgrey";
+		outputElt.style.width = "100%";
+		outputElt.style.height = "20em";
+		outputElt.style.overflow = "scroll";
+		
+		addIntro(outputElt)
+		
+		return outputElt;
+	}
+	
 	function addKeyboadListener(consDomElt, ioLine, interpreter, domInput, domIoLine, prompt) {
 		consDomElt.addEventListener("keydown", function(event) {
 			if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
@@ -786,7 +796,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 			}
 		});
 	}
-
+	
 	/**
 	 * Retourne l'entrée utilisateur initialisée depuis l'entrée correspondant
 	 * aux options précisée par celui-ci. Les entrées peuvent provenir
@@ -883,30 +893,9 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 		
 		return io;
 	}
-
-	
-	return Console;
-})(h_keyboardtk, ns_wcons.Interpreter, ns_wcons.Input);
-
-var h_wcons = (function(Console, IoLine, DomOutput) {
-	
-	function buildJConsoleDomElt(id) {
-		var outputElt = document.createElement("div");
-		outputElt.setAttribute("id", id);
-		
-		// Pour écouter les keypress, le div doit d’abord pouvoir recevoir le focus
-		outputElt.tabIndex = "1";  // Permet au div de pouvoir recevoir le focus
-		
-		outputElt.style.fontFamily = "courier";
-		outputElt.style.backgroundColor = "lightgrey";
-		outputElt.style.width = "100%";
-		outputElt.style.height = "20em";
-		outputElt.style.overflow = "scroll";
-		
-		return outputElt;
-	}
 	
 	return {
+		
 		/**
 		 * Ajoute une console dans l'élément dont l'ID est passé en paramètre.
 		 * @param {string} dinId L'id de l'entrée DOM (din = Dom INput).
@@ -924,8 +913,11 @@ var h_wcons = (function(Console, IoLine, DomOutput) {
 			var consoleIoLine = new IoLine();
 			consoleIoLine.appendTo(consDomElt);
 			
-			var jcons = new Console(consDomElt, consoleIoLine, domInput, domIoLine);			
-			consoleIoLine.printPrompt(jcons.getPrompt());
+			var consoleInterpreter = new Interpreter();
+			var jcons = new Console(consDomElt, consoleIoLine, domInput, domIoLine, consoleInterpreter);			
+			consoleIoLine.printPrompt(_prompt);
+			
+			addKeyboadListener(consDomElt, consoleIoLine, consoleInterpreter, domInput, domIoLine, _prompt);
 			
 			var container = document.getElementById(id);
 			container.appendChild(consDomElt);
@@ -935,4 +927,4 @@ var h_wcons = (function(Console, IoLine, DomOutput) {
 			return jcons;
 		}
 	}
-})(ns_wcons.Console, ns_wcons.IoLine, ns_wcons.DomOutput);
+})(ns_wcons.Console, ns_wcons.IoLine, ns_wcons.DomOutput, ns_wcons.Interpreter, h_keyboardtk, ns_wcons.Input);
