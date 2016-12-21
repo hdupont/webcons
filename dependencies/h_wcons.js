@@ -3,7 +3,7 @@
  * 
  * La console
  * ----------
- * Une console (Console) permet d'exécuter des commandes (Command) tapées sur
+ * Une console permet d'exécuter des commandes (Command) tapées sur
  * une ligne de commandes (IoLine) après que l'utilisateur ait appuyé sur la
  * touche "Entrée".
  * Les commandes comprises par la console se trouvent dans une liste
@@ -697,62 +697,19 @@ ns_wcons.Interpreter = (function(Commands, CommandApi) {
 	return Interpreter;
 })(ns_wcons.Commands,  ns_wcons.CommandApi, ns_wcons.Input);
 
-/**
- * --------------
- * @class Console
- * --------------
- * Une Console est un simulacre de console dans laquelle l'utilisateur peut
- * exécuter des commandes.
- */
-ns_wcons.Console = (function(keyboard, Interpreter, Input) {
+var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 	
-	// public
-	// ------
-
-	function Console(ioLine, domInput, domIoLine) {
-		this._domElt = null; // Un singleton.		
-		this._prompt = "wc> ";
-		this._ioLine = ioLine;
-		this._input = null;
-		this._interpreter = new Interpreter();
-		this._domInput = domInput;
-		this._domIoLine = domIoLine;
-	}
-	
-	Console.prototype.getDomElt = function() {
-		if (this._domElt !== null) {
-			return this._domElt;
+	function buildJConsoleDomElt(id) {
+		
+		function addIntro(domElt) {
+			var helpNode = document.createElement("div");
+			helpNode.innerHTML = "Tapez cmdlist pour avoir la liste des commandes comprises par la console.<br />" +
+				"Tapez help suivi du nom d'une commande pour avoir de l'aide sur cette commande.";
+			domElt.appendChild(helpNode);
 		}
-
-		this._domElt = buildJConsoleDomElt(this);
-		addIntro(this);
-		this._ioLine.appendTo(this._domElt);
-		addKeyboadListener(this);
-
-		return this._domElt;
-	};
-	
-	// Affichage
-	
-	Console.prototype.getPrompt = function(prompt) {
-		return this._prompt;
-	};
-	
-	// Commandes
-	
-	Console.prototype.addCommand = function(name, handler) {
-		this._interpreter.addCommand(name, handler, false);
-	};
-	Console.prototype.addHelpCommand = function(name, handler) {
-		this._interpreter.addHelpCommand(name, handler);
-	};
-	
-	// private
-	// -------
-	
-	function buildJConsoleDomElt(that) {
+		
 		var outputElt = document.createElement("div");
-		outputElt.setAttribute("id", "ns_wcons");
+		outputElt.setAttribute("id", id);
 		
 		// Pour écouter les keypress, le div doit d’abord pouvoir recevoir le focus
 		outputElt.tabIndex = "1";  // Permet au div de pouvoir recevoir le focus
@@ -763,62 +720,59 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 		outputElt.style.height = "20em";
 		outputElt.style.overflow = "scroll";
 		
+		addIntro(outputElt)
+		
 		return outputElt;
 	}
-	function addIntro(self) {
-		var helpNode = document.createElement("div");
-		helpNode.innerHTML = "Tapez cmdlist pour avoir la liste des commandes comprises par la console.<br />" +
-			"Tapez help suivi du nom d'une commande pour avoir de l'aide sur cette commande.";
-		self._domElt.appendChild(helpNode);
-	}
-	function addKeyboadListener(that) {
-		that._domElt.addEventListener("keydown", function(event) {
+	
+	function addKeyboadListener(domElt, ioLine, interpreter, din, doutIoLine, prompt) {
+		domElt.addEventListener("keydown", function(event) {
 			if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
-				that._ioLine.addChar(event.key);
+				ioLine.addChar(event.key);
 			}
 			else if (keyboard.isEnter(event)) {
-				var io = findIo(that._ioLine, that._domInput, that._domIoLine);
+				var io = findIo(ioLine, din, doutIoLine);
 				
 				// Une fois les IO déterminées, on passe sur une nouvelle ligne
 				// où la commande commencera ses affichages.
-				that._ioLine.moveForward();
-				that._interpreter.eval(io.input, io.output);
-				that._ioLine.printPrompt(that._prompt);
-				that._ioLine.scrollIntoTheView();
+				ioLine.moveForward();
+				interpreter.eval(io.input, io.output);
+				ioLine.printPrompt(prompt);
+				ioLine.scrollIntoTheView();
 			}
 			else if (keyboard.isArrowLeft(event)) {
-				that._ioLine.moveCursorLeft();
+				ioLine.moveCursorLeft();
 			}
 			else if (keyboard.isArrowRight(event)) {
-				that._ioLine.moveCursorRight();
+				ioLine.moveCursorRight();
 			}
 			else if (keyboard.isBackspace(event)) {
-				that._ioLine.removeChar();
+				ioLine.removeChar();
 			}
 			else if (keyboard.isEnd(event)) {
 				event.preventDefault();
-				 that._ioLine.moveCursorToEnd();
+				ioLine.moveCursorToEnd();
 			}
 			else if (keyboard.isHome(event)) {
 				event.preventDefault();
-				that._ioLine.moveCursorToBeginning();
+				ioLine.moveCursorToBeginning();
 			}
 		});
 	}
-
+	
 	/**
 	 * Retourne l'entrée utilisateur initialisée depuis l'entrée correspondant
 	 * aux options précisée par celui-ci. Les entrées peuvent provenir
 	 * directement de la ligne de commande et/ou du DOM.
 	 * @param {IoLine} ioLine L'objet permettant d'effectuer les E/S.
-	 * @param {HTMLElement} domInput L'entrée qui lit depuis le DOM.
-	 * @param {IoLine} domIoLine La sortie qui écrir sur le DOM.
+	 * @param {HTMLElement} din L'entrée qui lit depuis le DOM.
+	 * @param {IoLine} doutIoLine La sortie qui écrir sur le DOM.
 	 * @returns {Input} L'entrée utilisateur utilisable par l'interpréteur
 	 * de commande.
 	 * NOTE  din = dom input.
 	 * TODO Faire le appendTo de ioLine sur le dout et on a tout gratuitement. 
 	 */
-	function findIo(ioLine, domInput, domIoLine) {
+	function findIo(ioLine, din, doutIoLine) {
 		var io = {input: null, output: null};
 		var interpreterInputStr = "";
 		var userInputStr = ioLine.readUserInput();
@@ -839,7 +793,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 			// NOTE Pour l'instant la seule source est "din"
 			tmpInput.readToken();
 			// ASSERT Soit le token suivant est ">", soit c'est fini.
-			interpreterInputStr = domInput.value;
+			interpreterInputStr = din.value;
 			h_log.info("findIo - Everything from the DOM");
 		}
 		else {
@@ -864,7 +818,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 				}
 				// ASSERT Soit le token suivant est ">", soit c'est fini.
 				
-				cmdArgsSrc = domInput.value;
+				cmdArgsSrc = din.value;
 				h_log.info("findIo - Args from the DOM.");
 			}
 			else {
@@ -887,7 +841,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 		var outputMarkToken = tmpInput.readToken();
 		h_log.debug("findIo - outputMarkToken: " + outputMarkToken);
 		if (outputMarkToken && outputMarkToken === ">") {
-			output = domIoLine;
+			output = doutIoLine;
 			h_log.info("findIo - Output to the DOM.");
 		}
 		else {
@@ -903,11 +857,8 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 		return io;
 	}
 	
-	return Console;
-})(h_keyboardtk, ns_wcons.Interpreter, ns_wcons.Input);
-
-var h_wcons = (function(Console, IoLine, DomOutput) {
 	return {
+		
 		/**
 		 * Ajoute une console dans l'élément dont l'ID est passé en paramètre.
 		 * @param {string} dinId L'id de l'entrée DOM (din = Dom INput).
@@ -915,24 +866,29 @@ var h_wcons = (function(Console, IoLine, DomOutput) {
 		 * @returns {JConsole} La console qui vient d'être ajoutée au DOM.
 		 */
 		appendTo: function(id, dinId, doutId) {
-			var domInput = document.getElementById(dinId);
-			var domOutputElement = document.getElementById(doutId);
-			
-			var domIoLine = new IoLine();
-			domIoLine.appendTo(domOutputElement);
-			
+			// Création de la console.
+			var consolePrompt = "wc> ";
+			var consoleDomElt = buildJConsoleDomElt("ns_wcons");
 			var consoleIoLine = new IoLine();
-			
-			var jcons = new Console(consoleIoLine, domInput, domIoLine);
-			jconsDomElt = jcons.getDomElt();
-			consoleIoLine.printPrompt(jcons.getPrompt());
-			
+			consoleIoLine.appendTo(consoleDomElt);
 			var container = document.getElementById(id);
-			container.appendChild(jconsDomElt);
+			container.appendChild(consoleDomElt);
+			consoleDomElt.focus();
+			consoleIoLine.printPrompt(consolePrompt);
 			
-			jconsDomElt.focus();
+			// Création des Entrées/Sorties DOM.
+			var din = document.getElementById(dinId);
+			var dout = document.getElementById(doutId);						
+			var doutIoLine = new IoLine();
+			doutIoLine.appendTo(dout);
 			
-			return jcons;
+			// Création de l'interpréteur.
+			var interpreter = new Interpreter();
+			
+			// Gestion des évènements clavier.
+			addKeyboadListener(consoleDomElt, consoleIoLine, interpreter, din, doutIoLine, consolePrompt);
+			
+			return interpreter;
 		}
 	}
-})(ns_wcons.Console, ns_wcons.IoLine, ns_wcons.DomOutput);
+})(ns_wcons.IoLine, ns_wcons.DomOutput, ns_wcons.Interpreter, h_keyboardtk, ns_wcons.Input);

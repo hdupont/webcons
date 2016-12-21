@@ -75,7 +75,7 @@ ns_wconsapp.cmds.calc = (function(OneOpCalculator) {
 		var expr = api.inputString();
 		try {
 			var res = "" + calcExpr(expr);
-			api.print(res);	
+			api.println(res);	
 		}
 		catch(e) {
 			api.printHelp();
