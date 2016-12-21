@@ -866,7 +866,7 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 		 * @returns {JConsole} La console qui vient d'être ajoutée au DOM.
 		 */
 		appendTo: function(id, dinId, doutId) {
-			var prompt = "wc> ";
+			var consolePrompt = "wc> ";
 			var din = document.getElementById(dinId);
 			var dout = document.getElementById(doutId);
 			var consDomElt = buildJConsoleDomElt("ns_wcons");
@@ -878,9 +878,9 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 			consoleIoLine.appendTo(consDomElt);
 			
 			var interpreter = new Interpreter();
-			consoleIoLine.printPrompt(prompt);
+			consoleIoLine.printPrompt(consolePrompt);
 			
-			addKeyboadListener(consDomElt, consoleIoLine, interpreter, din, doutIoLine, prompt);
+			addKeyboadListener(consDomElt, consoleIoLine, interpreter, din, doutIoLine, consolePrompt);
 			
 			var container = document.getElementById(id);
 			container.appendChild(consDomElt);
