@@ -869,23 +869,23 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 			var consolePrompt = "wc> ";
 			var din = document.getElementById(dinId);
 			var dout = document.getElementById(doutId);
-			var consDomElt = buildJConsoleDomElt("ns_wcons");
+			var consoleDomElt = buildJConsoleDomElt("ns_wcons");
 						
 			var doutIoLine = new IoLine();
 			doutIoLine.appendTo(dout);
 			
 			var consoleIoLine = new IoLine();
-			consoleIoLine.appendTo(consDomElt);
+			consoleIoLine.appendTo(consoleDomElt);
 			
 			var interpreter = new Interpreter();
 			consoleIoLine.printPrompt(consolePrompt);
 			
-			addKeyboadListener(consDomElt, consoleIoLine, interpreter, din, doutIoLine, consolePrompt);
+			addKeyboadListener(consoleDomElt, consoleIoLine, interpreter, din, doutIoLine, consolePrompt);
 			
 			var container = document.getElementById(id);
-			container.appendChild(consDomElt);
+			container.appendChild(consoleDomElt);
 			
-			consDomElt.focus();
+			consoleDomElt.focus();
 			
 			return interpreter;
 		}
