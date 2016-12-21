@@ -3,7 +3,7 @@
  * 
  * La console
  * ----------
- * Une console (Console) permet d'exécuter des commandes (Command) tapées sur
+ * Une console permet d'exécuter des commandes (Command) tapées sur
  * une ligne de commandes (IoLine) après que l'utilisateur ait appuyé sur la
  * touche "Entrée".
  * Les commandes comprises par la console se trouvent dans une liste
