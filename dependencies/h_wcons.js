@@ -867,25 +867,22 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 		 */
 		appendTo: function(id, dinId, doutId) {
 			var consolePrompt = "wc> ";
-			var din = document.getElementById(dinId);
-			var dout = document.getElementById(doutId);
 			var consoleDomElt = buildJConsoleDomElt("ns_wcons");
-						
+			var consoleIoLine = new IoLine();
+			consoleIoLine.appendTo(consoleDomElt);
+			var container = document.getElementById(id);
+			container.appendChild(consoleDomElt);
+			consoleDomElt.focus();
+			consoleIoLine.printPrompt(consolePrompt);
+			
+			var din = document.getElementById(dinId);
+			
+			var dout = document.getElementById(doutId);						
 			var doutIoLine = new IoLine();
 			doutIoLine.appendTo(dout);
 			
-			var consoleIoLine = new IoLine();
-			consoleIoLine.appendTo(consoleDomElt);
-			
 			var interpreter = new Interpreter();
-			consoleIoLine.printPrompt(consolePrompt);
-			
 			addKeyboadListener(consoleDomElt, consoleIoLine, interpreter, din, doutIoLine, consolePrompt);
-			
-			var container = document.getElementById(id);
-			container.appendChild(consoleDomElt);
-			
-			consoleDomElt.focus();
 			
 			return interpreter;
 		}
