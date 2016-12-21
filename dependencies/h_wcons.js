@@ -731,14 +731,34 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 				ioLine.addChar(event.key);
 			}
 			else if (keyboard.isEnter(event)) {
-				var io = findIo(ioLine, din, doutIoLine);
-				
-				// Une fois les IO déterminées, on passe sur une nouvelle ligne
-				// où la commande commencera ses affichages.
-				ioLine.moveForward();
-				interpreter.eval(io.input, io.output);
-				ioLine.printPrompt(prompt);
-				ioLine.scrollIntoTheView();
+				var errorMessage = "";
+				try {
+					// On détermine les E/S de la commande à exécuter.
+					var io = findIo(ioLine, din, doutIoLine);
+					
+					// On passe sur une nouvelle ligne où la commande
+					// commencera ses affichages.
+					// NOTE Le passage à la ligne doit s'effectuer apèrs la
+					// lecture des E/S car les options d'E/S sont lues sur la
+					// ligne pointée par ioLine. Si on passe à la ligne avant
+					// ioLine pointera sur une ligne vide et il n'y aura rien à
+					// lire.
+					ioLine.moveForward();
+					
+					// On exécute la commande qui lira ses entrées depuis
+					// io.input et affichera ses sorties sur io.output.
+					interpreter.eval(io.input, io.output);
+						
+				}
+				catch(e) {
+					ioLine.moveForward();
+					ioLine.println(e.message);
+				}
+				finally {
+					// On réaffiche le prompt.
+					ioLine.printPrompt(prompt);
+					ioLine.scrollIntoTheView();
+				}
 			}
 			else if (keyboard.isArrowLeft(event)) {
 				ioLine.moveCursorLeft();
@@ -761,16 +781,19 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 	}
 	
 	/**
-	 * Retourne l'entrée utilisateur initialisée depuis l'entrée correspondant
-	 * aux options précisée par celui-ci. Les entrées peuvent provenir
-	 * directement de la ligne de commande et/ou du DOM.
+	 * Lit l'entrée utilisateur sur la ligne de commande, c'est-à-dire à la
+	 * position courante de l'ioLine et détermine les Entrées/Sorties de la
+	 * commande à exécuter en fonction des options indiquées par l'utilisateur..
+	 * NOTE Les entrées peuvent provenir directement de la ligne de commande
+	 * et/ou du DOM.
+	 * NOTE Les entrées peuvent s'effectuer dans la console ou dans le DOM.
+	 * NOTE din = dom input.
+	 * NOTE dout = dom output.
 	 * @param {IoLine} ioLine L'objet permettant d'effectuer les E/S.
 	 * @param {HTMLElement} din L'entrée qui lit depuis le DOM.
 	 * @param {IoLine} doutIoLine La sortie qui écrir sur le DOM.
 	 * @returns {Input} L'entrée utilisateur utilisable par l'interpréteur
 	 * de commande.
-	 * NOTE  din = dom input.
-	 * TODO Faire le appendTo de ioLine sur le dout et on a tout gratuitement. 
 	 */
 	function findIo(ioLine, din, doutIoLine) {
 		var io = {input: null, output: null};
@@ -785,6 +808,7 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 		// deux.
 		
 		// NOTE "<" marque le début des options d'IO.
+		// NOTE ">" marque le début des options d'Output.
 		if (firstToken === "<") {
 			// Cas 1. On lit toute la ligne de commande depuis la source
 			// indiquée après le "<".
@@ -841,10 +865,24 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 		var outputMarkToken = tmpInput.readToken();
 		h_log.debug("findIo - outputMarkToken: " + outputMarkToken);
 		if (outputMarkToken && outputMarkToken === ">") {
+			// Cas 1. La destination de la sortie de la commande est
+			// indiquée après le ">"
+			
+			// On lit le nom de la destination de la sortie de la commande.
+			// NOTE En pratique, pour l'instant on supprime le token "dout"
+			// de l'input
+			var doutToken = tmpInput.readToken();
+			if (doutToken !== "dout") {
+				throw new Error("findIo - dout token expected.");
+			}
+			// ASSERT Il n'y a plus de token dans l'input.
+			
 			output = doutIoLine;
 			h_log.info("findIo - Output to the DOM.");
 		}
 		else {
+			// Cas 2. La destination de la sortie de la commande est
+			// la console.
 			output = ioLine;
 			h_log.info("findIo - Output to the console.");
 		}
