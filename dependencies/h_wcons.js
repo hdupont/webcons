@@ -717,9 +717,14 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 		this._interpreter = new Interpreter();
 		this._domInput = domInput;
 		this._domIoLine = domIoLine;
+		
+		addIntro(this);
+		addKeyboadListener(this);
 	}
 	
 	Console.prototype.getDomElt = function() {
+		addIntro(this);
+		addKeyboadListener(this);
 		return this._domElt;
 	};
 	
@@ -878,6 +883,7 @@ ns_wcons.Console = (function(keyboard, Interpreter, Input) {
 		
 		return io;
 	}
+
 	
 	return Console;
 })(h_keyboardtk, ns_wcons.Interpreter, ns_wcons.Input);
