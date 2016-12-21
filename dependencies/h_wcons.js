@@ -697,7 +697,7 @@ ns_wcons.Interpreter = (function(Commands, CommandApi) {
 	return Interpreter;
 })(ns_wcons.Commands,  ns_wcons.CommandApi, ns_wcons.Input);
 
-var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input) {
+var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 	
 	function buildJConsoleDomElt(id) {
 		
@@ -891,4 +891,4 @@ var h_wcons = (function(Console, IoLine, DomOutput, Interpreter, keyboard, Input
 			return interpreter;
 		}
 	}
-})(ns_wcons.Console, ns_wcons.IoLine, ns_wcons.DomOutput, ns_wcons.Interpreter, h_keyboardtk, ns_wcons.Input);
+})(ns_wcons.IoLine, ns_wcons.DomOutput, ns_wcons.Interpreter, h_keyboardtk, ns_wcons.Input);
