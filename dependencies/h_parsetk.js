@@ -2,6 +2,8 @@
  * NOTE Ici, les tokens sont séparés par des espaces.
  * NOTE En JavaScript les strings ne sont pas mutable donc on ne définit ici
  * que peek et pas des read.
+ * TODO Renommer en parsewstokentk car parse des tokens séparé par des White
+ * Spaces
  */
 var h_parsetk = (function() {
 	return {
