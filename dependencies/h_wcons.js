@@ -521,11 +521,9 @@ ns_wcons.Input = (function(parseTk) {
 		if (this.isEmpty()) {
 			return "";
 		}
+		// 1. On récupère le token avec peekToken (qui ne modifie pas la chaine)
 		var token = parseTk.peekToken(this._str, this._index);
-		
-		// On fait pointer this._index sur le caractère qui suit le token lu. 
-		// NOTE peekToken ne modifie pas la chaine, donc on commence par se
-		// placer sur le premier caractère du token avec skipSpaces.
+		// 2. On se place après le token avec skipToken
 		var index = parseTk.skipToken(this._str, this._index);
 		if (index < 0 || index >= this._str.length) {
 			this._index = -1;
