@@ -503,6 +503,7 @@ ns_wcons.Input = (function(parseTk) {
 	function Input(str) {
 		this._str = str;
 		this._index = str.length > 0 ? 0 : -1;
+		this._lastTokenRead = "";
 	}
 	
 	/**
@@ -531,7 +532,14 @@ ns_wcons.Input = (function(parseTk) {
 		else {
 			this._index = index;
 		}
-		return token;
+		
+		this._lastTokenRead = token;
+		
+		return this._lastTokenRead;
+	};
+
+	Input.prototype.lastTokenRead = function() {
+		return this._lastTokenRead;
 	};
 	
 	Input.prototype.readChar = function() {
@@ -612,7 +620,7 @@ ns_wcons.Input = (function(parseTk) {
 	return Input;
 })(h_parsetk);
 
-ns_wcons.Interpreter = (function(Commands, CommandApi) {
+ns_wcons.Interpreter = (function(Commands, CommandApi, Input) {
 	
 	function Interpreter() {
 		this._commands = new Commands();
@@ -818,7 +826,10 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 			// NOTE Pour l'instant la seule source est "din"
 			tmpInput.readToken();
 			// ASSERT Soit le token suivant est ">", soit c'est fini.
+			
+			// On valorise interpreterInputStr
 			interpreterInputStr = din.value;
+			
 			h_log.info("findIo - Everything from the DOM");
 		}
 		else {
@@ -828,7 +839,7 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 			h_log.info("findIo - cmd: " + cmdName);
 			
 			// On détermine la source des arguements de la commande.
-			var cmdArgsSrc = null
+			var cmdArgsSrc = null;
 			var secondToken = tmpInput.readToken();
 			if (secondToken === "<") {
 				// Cas 2.1. La source des arguments de la commande est
@@ -846,24 +857,41 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 				cmdArgsSrc = din.value;
 				h_log.info("findIo - Args from the DOM.");
 			}
+			else if (secondToken === ">") {
+				// Cas 2.2. La commande ne prend pas d'argument.
+				cmdArgsSrc = "";
+			}
 			else {
-				// Cas 2.2. La source est indiquée après le nom de la commande,
-				// c'est secondToken;
+				// Cas 2.3. La source est indiquée après le nom de la commande,
+				// c'est secondToken et ce qui le suit jusqu'à un éventuel ">".
 				var cmdArgsSrc = secondToken;
+				var currentToken = null;
+				while((currentToken = tmpInput.readToken()) !== ">" && ! tmpInput.isEmpty()) {
+					cmdArgsSrc += " " + currentToken;
+				}
 				// ASSERT Soit le token suivant est ">", soit c'est fini.
 				
-				h_log.info("findIo - Args from the prompt.");
+				h_log.info("findIo - Args from the prompt, cmdArgsSrc:" + cmdArgsSrc);
 			}
 			
 			interpreterInputStr = cmdName + " " + cmdArgsSrc;
 		}
-		// ASSERT Soit le token suivant est ">", soit c'est fini.
-
+		
 		// On détermine la sortie de l'interpréteur.
 		// NOTE La sortie peut s'effectuer dans la console ou dans le DOM.
 		
 		var output = null;
-		var outputMarkToken = tmpInput.readToken();
+		var outputMarkToken = null;
+		if (tmpInput.lastTokenRead() === ">") {
+			// Cas 1. On vient du cas où la commande ne prend pas d'arguments.
+			outputMarkToken = tmpInput.lastTokenRead();
+			h_log.debug("findIo - cmd with no args.");
+		}
+		else {
+			// Cas 1. On vient du cas où la commande prend des arguments.
+			outputMarkToken = tmpInput.readToken();
+			h_log.debug("findIo - cmd with args.");
+		}
 		h_log.debug("findIo - outputMarkToken: " + outputMarkToken);
 		if (outputMarkToken && outputMarkToken === ">") {
 			// Cas 1. La destination de la sortie de la commande est
@@ -888,7 +916,7 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 			h_log.info("findIo - Output to the console.");
 		}
 		// ASSERT tmpInput ne contient plus de token
-		h_assert.assert(tmpInput.readToken() === "", "findIo - input should be empty.")
+		h_assert.assert(tmpInput.readToken() === "", "findIo - input should be empty.");
 		
 		var io = {
 				input: new Input(interpreterInputStr),
