@@ -1,1 +1,0 @@
-ns_wconsapp.cmds.interactive = {};

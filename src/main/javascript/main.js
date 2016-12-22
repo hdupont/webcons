@@ -9,17 +9,11 @@
 (function(cmds, wcons) {
 	
 	// On ajoute une console au DOM.
-	var cons = wcons.appendTo("calcapp");
-	
-	// On ajoute les commandes en ligne et leur aide.
-	for (var cmdName in cmds.interactive) {
-		cons.addInteractiveCommand(cmdName, cmds.interactive[cmdName]);
-		cons.addHelpCommand(cmdName, cmds.help[cmdName]);
-	}
+	var cons = wcons.appendTo("h_wcapp", "h_wcapp_din", "h_wcapp_dout");
 	
 	// On ajoute les commandes interactives et leur aide.
-	for (var cmdName in cmds.inline) {
-		cons.addInlineCommand(cmdName, cmds.inline[cmdName]);
+	for (var cmdName in cmds) {
+		cons.addCommand(cmdName, cmds[cmdName]);
 		cons.addHelpCommand(cmdName, cmds.help[cmdName]);
 	}
 

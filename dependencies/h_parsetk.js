@@ -1,3 +1,10 @@
+/**
+ * NOTE Ici, les tokens sont séparés par des espaces.
+ * NOTE En JavaScript les strings ne sont pas mutable donc on ne définit ici
+ * que peek et pas des read.
+ * TODO Renommer en parsewstokentk car parse des tokens séparé par des White
+ * Spaces
+ */
 var h_parsetk = (function() {
 	return {
 		
@@ -45,6 +52,22 @@ var h_parsetk = (function() {
 		},
 		
 		/**
+		 * Retourne l'indice du premier caractère suivant le token trouvé à
+		 * partir de start. Retourn -1 si l'indice de départ est supérieur 
+		 * à la longueur de la chaine.
+		 * @returns {int} Retourne l'indice du premier caractère suivant le
+		 * token trouvé à
+		 */
+		skipToken: function(str, start) {
+			if (start > str.length - 1) {
+				return -1;
+			}
+			var tokenFirstChar = this.skipSpaces(str, start);
+			var spaceAfterToken = this.skipNonSpaces(str, tokenFirstChar);
+			return spaceAfterToken;
+		},
+		
+		/**
 		 * Retourne le premier token trouvé à partir de start.
 		 * @param {string} str La chaine dans laquelle on veut effectuer
 		 * recherche.
@@ -54,16 +77,19 @@ var h_parsetk = (function() {
 		 */
 		peekToken: function(str, start) {
 			if (start > str.length - 1) {
-				"";
+				return "";
 			}
-			var index = start;
-			this.skipSpaces(str, index);
+			var index = this.skipSpaces(str, start);
 			var token = "";
 			while (str[index] !== " " && index < str.length) {
 				token += str[index];
 				index++;
 			}
 			return token;
+		},
+		
+		findTokenIndex: function(str, token) {
+			return str.indexOf(token);
 		},
 		
 		/**
@@ -78,7 +104,7 @@ var h_parsetk = (function() {
 		 * 
 		 * TODO Uniformiser l'interface. Tout le monde commence à 1 ou à zéro.
 		 */
-		findTokenIndex: function(str, index, start) {
+		findFirstTokenIndex: function(str, index, start) {
 			if (start > str.length - 1) {
 				return -1;
 			}
@@ -106,51 +132,24 @@ var h_parsetk = (function() {
 		 * Lorem ipsum dolor sit amet
 		 * 01234567890123456789012345 <- indice des caractères (commence à 0)
 		 * 1. Le premier token trouvé à partir du caractère d'indice 7
-		 * findToken: function("Lorem ipsum dolor sit amet", 1, 7)
+		 * findFirstToken: function("Lorem ipsum dolor sit amet", 1, 7)
 		 * => "psum"
 		 * 2. Le deuxième token trouvé à partir du caractère d'indice 7
-		 * findToken: function("Lorem ipsum dolor sit amet", 2, 7)
+		 * findFirstToken: function("Lorem ipsum dolor sit amet", 2, 7)
 		 * => "dolor"
 		 * 
 		 * TODO Uniformiser l'interface. Tout le monde commence à 1 ou à zéro.
 		 */
-		findToken: function(str, index, start) {
+		findFirstToken: function(str, index, start) {
 			if (start > str.length - 1) {
 				return "";
 			}
-			var firstTokenCharIndex = this.findTokenIndex(str, index, start);
+			var firstTokenCharIndex = this.findFirstTokenIndex(str, index, start);
 			if (firstTokenCharIndex === -1) {
 				return "";
 			}
 			var token = this.peekToken(str, firstTokenCharIndex);
 			return token;
-		},
-		
-		/**
-		 * Retourne la partie de la chaine str commençant après l'index-ième token.
-		 * @param {string} str La chaine dans laquelle va s'effectuer la recherche.
-		 * @param {index} Le numéro (commençant à 1) du token après lequel on
-		 * souhaite que la chaine retournée commence.
-		 * @returns {string} La partie de la chaine str commençant après
-		 * l'index-ième token.
-		 * 
-		 * EXAMPLE
-		 * peekAfterToken("Lorem ipsum dolor sit amet", 0)
-		 * => "Lorem ipsum dolor sit amet"
-		 * peekAfterToken("Lorem ipsum dolor sit amet", 1)
-		 * => "ipsum dolor sit amet"
-		 * peekAfterToken("Lorem ipsum dolor sit amet", 2)
-		 * => "dolor sit amet"
-		 */
-		peekAfterToken: function(str, index) {
-			if (str === "") {
-				return "";
-			}
-			var firstTokenCharIndex = this.findTokenIndex(str, index + 1, 0);
-			if (firstTokenCharIndex === -1) {
-				return "";
-			}
-			return str.slice(firstTokenCharIndex);
 		}
 	};
 })();
