@@ -413,14 +413,14 @@ ns_wcons.IoLine = (function(LineDomView) {
 		this._domView.positionCursor(this._cursorIndex);
 	};
 	IoLine.prototype.moveCursorRight = function() {
-		if (this._cursorIndex === this._chars.length - 1) {
+		if (this._cursorIndex > this._chars.length - 1) {
 			return;
 		}
 		this._cursorIndex++;
 		this._domView.positionCursor(this._cursorIndex);
 	};
 	IoLine.prototype.moveCursorToEnd = function() {
-		this._cursorIndex = this._chars.length - 1;
+		this._cursorIndex = this._chars.length;
 		this._domView.positionCursor(this._cursorIndex);
 	};
 	IoLine.prototype.moveCursorToBeginning = function() {
