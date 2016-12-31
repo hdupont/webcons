@@ -152,6 +152,21 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 	 */
 	CommandApi.prototype.quit = "quit";
 	
+	// Software tools primitives
+	// -------------------------
+	
+	CommandApi.prototype.getc = function(c) {
+		return this._input.readChar();
+	};
+	
+	CommandApi.prototype.putc = function(c) {
+		this._ioLine.print(c);
+	};
+
+	CommandApi.prototype.eof = function(c) {
+		return this._input.isEmpty();
+	};
+	
 	return CommandApi;
 })(ns_wcons.CommandExitException);
 
@@ -282,7 +297,7 @@ ns_wcons.LineDomView = (function() {
 	/**
 	 * Ajoute le caractère devant le curseur.
 	 */
-	LineDomView.prototype.addChar = function(c, cursorIndex) {
+	LineDomView.prototype.addChar = function(c) {
 		var charElt = buildCharDomElt(c);
 		this._domContainer.insertBefore(charElt, this._cursorElement);
 	};
@@ -378,7 +393,7 @@ ns_wcons.IoLine = (function(LineDomView) {
 		addChar(this, character);
 	};
 	IoLine.prototype.print = function(str) {
-		clearChars(this);
+//		clearChars(this);
 		for (var i = 0; i < str.length; i++) {
 			var char = str[i];
 			this.addChar(char);
@@ -386,7 +401,7 @@ ns_wcons.IoLine = (function(LineDomView) {
 	};
 	IoLine.prototype.printPrompt = function(str) {
 		this.print(str);
-		this._firstEditableChar = str.length;
+		this._firstEditableChar = this._chars.length;
 	};
 	IoLine.prototype.println = function(str) {
 		if (typeof str !== "undefined" || str === "") {
@@ -457,7 +472,7 @@ ns_wcons.IoLine = (function(LineDomView) {
 	function addChar(self, character) {
 		self._chars.splice(self._cursorIndex, 0, character);
 		self._cursorIndex++;
-		self._domView.addChar(character, this._cursorIndex);
+		self._domView.addChar(character);
 	};
 
 	function addNTimes(self, n, character) {
@@ -756,8 +771,7 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 					
 					// On exécute la commande qui lira ses entrées depuis
 					// io.input et affichera ses sorties sur io.output.
-					interpreter.eval(io.input, io.output);
-						
+					interpreter.eval(io.input, io.output);	
 				}
 				catch(e) {
 					ioLine.moveForward();
