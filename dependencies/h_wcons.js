@@ -510,8 +510,8 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 		
 		function addIntro(domElt) {
 			var helpNode = document.createElement("div");
-			helpNode.innerHTML = "Tapez cmdlist pour avoir la liste des commandes comprises par la console.<br />" +
-				"Tapez help suivi du nom d'une commande pour avoir de l'aide sur cette commande.";
+			helpNode.innerHTML = "For now you can use 'cleardout' and the software tools.<br />" +
+				"For more information, take a look at the source code.";
 			domElt.appendChild(helpNode);
 		}
 		
@@ -527,7 +527,7 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 		outputElt.style.height = "20em";
 		outputElt.style.overflow = "scroll";
 		
-		addIntro(outputElt)
+		addIntro(outputElt);
 		
 		return outputElt;
 	}
