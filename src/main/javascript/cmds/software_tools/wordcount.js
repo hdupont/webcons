@@ -2,8 +2,8 @@ ns_wconsapp.cmds.wordcount = function(api) {
 	var nw = 0;
 	var c = null;
 	var inword = false;
-	while ((c = api.getc()) !== api.eof()) {
-		if (c === api.blank() || c === api.newline() || c === api.tab()) {
+	while ((c = api.getc()) !== api.ENDFILE()) {
+		if (c === api.BLANK() || c === api.NEWLINE() || c === api.TAB()) {
 			inword = false;
 		}
 		else if (! inword) {
@@ -12,5 +12,5 @@ ns_wconsapp.cmds.wordcount = function(api) {
 		}
 	}
 	api.putdec(nw, 1);
-	api.putc(api.newline());
+	api.putc(api.NEWLINE());
 }

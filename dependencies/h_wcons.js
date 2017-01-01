@@ -47,19 +47,19 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 		this._ioLine.print("" + number);
 	};
 	
-	CommandApi.prototype.newline = function() {
+	CommandApi.prototype.NEWLINE = function() {
 		return 10;
 	};
 	
-	CommandApi.prototype.eof = function(c) {
+	CommandApi.prototype.ENDFILE = function(c) {
 		return this._input.oefCode();
 	};
 	
-	CommandApi.prototype.blank = function() {
+	CommandApi.prototype.BLANK = function() {
 		return 32;
 	};
 	
-	CommandApi.prototype.tab = function() {
+	CommandApi.prototype.TAB = function() {
 		return 9;
 	};
 	
