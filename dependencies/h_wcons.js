@@ -472,12 +472,15 @@ ns_wcons.Interpreter = (function(Commands, CommandApi, Input) {
 	Interpreter.prototype.inputString = function() {
 		return this._currentInputStr;
 	};
-	Interpreter.prototype.evalCurrentCmd = function(ioLine) {
+	Interpreter.prototype.setOutput = function(output) {
+		this._output = output;
+	};
+	Interpreter.prototype.evalCurrentCmd = function() {
 		console.log("Evaluatuing command: " + this._currentCommand.getName());
 		var input = new Input(this._currentInputStr);
 		input.skipSpaces();
 		console.log("White spaces skipped");
-		this._currentCommand.exec(input, ioLine);
+		this._currentCommand.exec(input, this._output);
 		console.log("Evaluation done.");
 		this._currentCommand = null;
 	};
@@ -519,7 +522,7 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 				event.preventDefault();
 				console.log("EOF");
 				console.log("Interpreter input: " + interpreter.inputString());
-				interpreter.evalCurrentCmd(ioLine);
+				interpreter.evalCurrentCmd();
 				ioLine.printPrompt(prompt);
 			}
 			else if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
@@ -548,13 +551,23 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 					var cmdName = userInput.readToken();
 					console.log("Command name: '" + cmdName + "'");
 					interpreter.loadCmd(cmdName);
-					
-					// STEP On passe à la ligne.
+					interpreter.setOutput(ioLine);
 					ioLine.moveForward(); // REF NOTE(ioLine)
 					
 					// STEP En cas d'échec on réaffiche un prompt.
 					if (! interpreter.hasOneCmdLoaded()) {	
 						ioLine.printPrompt(prompt);
+					}
+					// STEP En cas de succés on détermine les E/S de la commande.
+					else {
+						var dio = userInput.readToken();
+						if (dio === "dio") {
+							console.log("dio: Dom IO");
+							interpreter.addToInput(din.value);
+							interpreter.setOutput(doutIoLine);
+							interpreter.evalCurrentCmd();
+							ioLine.printPrompt(prompt);
+						}	
 					}
 				}
 			}
