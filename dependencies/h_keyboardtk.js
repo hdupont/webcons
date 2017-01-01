@@ -53,6 +53,10 @@ var h_keyboardtk = (function() {
 		isHome: function(keyboardEvent) {
 			var code = codeFromEvent(keyboardEvent);
 			return code === 36;
+		},
+		isEndOfFile: function(keyboardEvent) {
+			var code = codeFromEvent(keyboardEvent);
+			return code === 68 && keyboardEvent.ctrlKey;
 		}
 	};
 })();

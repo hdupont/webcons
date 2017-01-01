@@ -751,37 +751,15 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 	
 	function addKeyboadListener(domElt, ioLine, interpreter, din, doutIoLine, prompt) {
 		domElt.addEventListener("keydown", function(event) {
-			if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
+			if (keyboard.isEndOfFile(event)) {
+				event.preventDefault();
+				alert("EOF");
+			}
+			else if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
 				ioLine.addChar(event.key);
 			}
 			else if (keyboard.isEnter(event)) {
-				var errorMessage = "";
-				try {
-					// On détermine les E/S de la commande à exécuter.
-					var io = findIo(ioLine, din, doutIoLine);
-					
-					// On passe sur une nouvelle ligne où la commande
-					// commencera ses affichages.
-					// NOTE Le passage à la ligne doit s'effectuer apèrs la
-					// lecture des E/S car les options d'E/S sont lues sur la
-					// ligne pointée par ioLine. Si on passe à la ligne avant
-					// ioLine pointera sur une ligne vide et il n'y aura rien à
-					// lire.
-					ioLine.moveForward();
-					
-					// On exécute la commande qui lira ses entrées depuis
-					// io.input et affichera ses sorties sur io.output.
-					interpreter.eval(io.input, io.output);	
-				}
-				catch(e) {
-					ioLine.moveForward();
-					ioLine.println(e.message);
-				}
-				finally {
-					// On réaffiche le prompt.
-					ioLine.printPrompt(prompt);
-					ioLine.scrollIntoTheView();
-				}
+				ioLine.moveForward();
 			}
 			else if (keyboard.isArrowLeft(event)) {
 				ioLine.moveCursorLeft();
@@ -801,143 +779,6 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 				ioLine.moveCursorToBeginning();
 			}
 		});
-	}
-	
-	/**
-	 * Lit l'entrée utilisateur sur la ligne de commande, c'est-à-dire à la
-	 * position courante de l'ioLine et détermine les Entrées/Sorties de la
-	 * commande à exécuter en fonction des options indiquées par l'utilisateur..
-	 * NOTE Les entrées peuvent provenir directement de la ligne de commande
-	 * et/ou du DOM.
-	 * NOTE Les entrées peuvent s'effectuer dans la console ou dans le DOM.
-	 * NOTE din = dom input.
-	 * NOTE dout = dom output.
-	 * @param {IoLine} ioLine L'objet permettant d'effectuer les E/S.
-	 * @param {HTMLElement} din L'entrée qui lit depuis le DOM.
-	 * @param {IoLine} doutIoLine La sortie qui écrir sur le DOM.
-	 * @returns {Input} L'entrée utilisateur utilisable par l'interpréteur
-	 * de commande.
-	 */
-	function findIo(ioLine, din, doutIoLine) {
-		var io = {input: null, output: null};
-		var interpreterInputStr = "";
-		var userInputStr = ioLine.readUserInput();
-		var tmpInput = new Input(userInputStr);
-		h_log.debug("findIo - tmpInput.toString(): " + tmpInput.toString());
-		var firstToken = tmpInput.readToken();
-		
-		// On détermine l'entrée de l'interpréteur.
-		// NOTE L'entrée peut provenir de la ligne du commande ou du DOM ou des
-		// deux.
-		
-		// NOTE "<" marque le début des options d'IO.
-		// NOTE ">" marque le début des options d'Output.
-		if (firstToken === "<") {
-			// Cas 1. On lit toute la ligne de commande depuis la source
-			// indiquée après le "<".
-			
-			// On lit le nom de la source de la ligne de commande.
-			// NOTE Pour l'instant la seule source est "din"
-			tmpInput.readToken();
-			// ASSERT Soit le token suivant est ">", soit c'est fini.
-			
-			// On valorise interpreterInputStr
-			interpreterInputStr = din.value;
-			
-			h_log.info("findIo - Everything from the DOM");
-		}
-		else {
-			// Cas 2. On lit la commande depuit le prompt. Il faut déterminer
-			// la source des arguements de la commande.
-			var cmdName = firstToken;
-			h_log.info("findIo - cmd: " + cmdName);
-			
-			// On détermine la source des arguements de la commande.
-			var cmdArgsSrc = null;
-			var secondToken = tmpInput.readToken();
-			if (secondToken === "<") {
-				// Cas 2.1. La source des arguments de la commande est
-				// indiquée après le "<"
-				
-				// On lit le nom de la source des argument de la commande.
-				// NOTE En pratique, pour l'instant on supprime le token "din"
-				// de l'input
-				var dinToken = tmpInput.readToken();
-				if (dinToken !== "din") {
-					throw new Error("findIo - din token expected.");
-				}
-				// ASSERT Soit le token suivant est ">", soit c'est fini.
-				
-				cmdArgsSrc = din.value;
-				h_log.info("findIo - Args from the DOM.");
-			}
-			else if (secondToken === ">") {
-				// Cas 2.2. La commande ne prend pas d'argument.
-				cmdArgsSrc = "";
-			}
-			else {
-				// Cas 2.3. La source est indiquée après le nom de la commande,
-				// c'est secondToken et ce qui le suit jusqu'à un éventuel ">".
-				var cmdArgsSrc = secondToken;
-				var currentToken = null;
-				while((currentToken = tmpInput.readToken()) !== ">" && ! tmpInput.isEmpty()) {
-					cmdArgsSrc += " " + currentToken;
-				}
-				// ASSERT Soit le token suivant est ">", soit c'est fini.
-				
-				h_log.info("findIo - Args from the prompt, cmdArgsSrc:" + cmdArgsSrc);
-			}
-			
-			interpreterInputStr = cmdName + " " + cmdArgsSrc;
-		}
-		
-		// On détermine la sortie de l'interpréteur.
-		// NOTE La sortie peut s'effectuer dans la console ou dans le DOM.
-		
-		var output = null;
-		var outputMarkToken = null;
-		if (tmpInput.lastTokenRead() === ">") {
-			// Cas 1. On vient du cas où la commande ne prend pas d'arguments.
-			outputMarkToken = tmpInput.lastTokenRead();
-			h_log.debug("findIo - cmd with no args.");
-		}
-		else {
-			// Cas 1. On vient du cas où la commande prend des arguments.
-			outputMarkToken = tmpInput.readToken();
-			h_log.debug("findIo - cmd with args.");
-		}
-		h_log.debug("findIo - outputMarkToken: " + outputMarkToken);
-		if (outputMarkToken && outputMarkToken === ">") {
-			// Cas 1. La destination de la sortie de la commande est
-			// indiquée après le ">"
-			
-			// On lit le nom de la destination de la sortie de la commande.
-			// NOTE En pratique, pour l'instant on supprime le token "dout"
-			// de l'input
-			var doutToken = tmpInput.readToken();
-			if (doutToken !== "dout") {
-				throw new Error("findIo - dout token expected.");
-			}
-			// ASSERT Il n'y a plus de token dans l'input.
-			
-			output = doutIoLine;
-			h_log.info("findIo - Output to the DOM.");
-		}
-		else {
-			// Cas 2. La destination de la sortie de la commande est
-			// la console.
-			output = ioLine;
-			h_log.info("findIo - Output to the console.");
-		}
-		// ASSERT tmpInput ne contient plus de token
-		h_assert.assert(tmpInput.readToken() === "", "findIo - input should be empty.");
-		
-		var io = {
-				input: new Input(interpreterInputStr),
-				output: output
-		}
-		
-		return io;
 	}
 	
 	return {
