@@ -370,10 +370,10 @@ ns_wcons.Input = (function(parseTk) {
 		if (this.isEmpty()) {
 			return "";
 		}
-		// 1. On récupère le token avec peekToken (qui ne modifie pas la chaine)
-		var token = parseTk.peekToken(this._str, this._index);
-		// 2. On se place après le token avec skipToken
-		var index = parseTk.skipToken(this._str, this._index);
+		// 1. On récupère le token avec peekWord (qui ne modifie pas la chaine)
+		var token = parseTk.peekWord(this._str, this._index);
+		// 2. On se place après le token avec skipWord
+		var index = parseTk.skipWord(this._str, this._index);
 		if (index < 0 || index >= this._str.length) {
 			this._index = -1;
 		}
