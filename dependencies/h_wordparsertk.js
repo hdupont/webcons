@@ -1,9 +1,11 @@
 /**
- * NOTE Ici, les tokens sont séparés par des espaces.
+ * Contient des utilitaires permettant de faciliter le parsing de mots.
+ * 
+ * NOTE Un mot est une suite de caractères "non blanc".
+ * Les mots sont séparés par des blanc.
+ * 
  * NOTE En JavaScript les strings ne sont pas mutable donc on ne définit ici
  * que peek et pas des read.
- * TODO Renommer en parsewstokentk car parse des tokens séparé par des White
- * Spaces
  */
 var h_wordparsertk = (function() {
 	return {
