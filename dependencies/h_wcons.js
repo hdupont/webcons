@@ -351,7 +351,6 @@ ns_wcons.Input = (function(parseTk) {
 	function Input(str) {
 		this._str = str;
 		this._index = str.length > 0 ? 0 : -1;
-		this._lastTokenRead = "";
 	}
 	
 	/**
@@ -381,13 +380,7 @@ ns_wcons.Input = (function(parseTk) {
 			this._index = index;
 		}
 		
-		this._lastTokenRead = token;
-		
-		return this._lastTokenRead;
-	};
-
-	Input.prototype.lastTokenRead = function() {
-		return this._lastTokenRead;
+		return token;
 	};
 	
 	Input.prototype.readChar = function() {
@@ -416,45 +409,7 @@ ns_wcons.Input = (function(parseTk) {
 		}
 		return charCode;
 	};
-	
-	/**
-	 * Renvoi le contenu d'une ligne (sans le séparateur de ligne).
-	 * NOTE C'est au client de gérer les sauts de ligne.
-	 * @returns {string} Le contenu de la ligne lue. 
-	 */
-	Input.prototype.readLine = function() {
-		var str = this.readUntil("\n");
 		
-		// On lit le séparateur de ligne si ce n'est pas la dernière ligne.
-		if (! this.isEmpty()) {
-			this.readChar();
-		}
-		
-		return str;
-	};
-	
-	/**
-	 * Lit l'input jusqu'au caractère passé en paramètre (non compris)
-	 * NOTE C'est au client de gérer les sauts de ligne.
-	 * @returns {string} Le contenu de la ligne lue. 
-	 */
-	Input.prototype.readUntil = function(stopChar) {
-		var line = "";
-		while (! this.isEmpty()) {
-			c = this.readChar();
-			if (c === stopChar) {
-				// On remet le caractère à sa place et on s'en va.
-				this._index--;
-				break;
-			}
-			else {
-				line += c;
-			}
-		}
-		
-		return line;
-	};
-	
 	Input.prototype.isEmpty = function() {
 		var res = false;
 		if (this._str === "") {
