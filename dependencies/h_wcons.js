@@ -43,6 +43,14 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 		this._ioLine.print(character);
 	};
 
+	CommandApi.prototype.putdec = function(number) {
+		this._ioLine.print("" + number);
+	};
+	
+	CommandApi.prototype.newline = function() {
+		return 10;
+	};
+	
 	CommandApi.prototype.eof = function(c) {
 		return this._input.oefCode();
 	};
