@@ -55,6 +55,14 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 		return this._input.oefCode();
 	};
 	
+	CommandApi.prototype.blank = function() {
+		return 32;
+	};
+	
+	CommandApi.prototype.tab = function() {
+		return 9;
+	};
+	
 	return CommandApi;
 })(ns_wcons.CommandExitException);
 
