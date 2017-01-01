@@ -5,7 +5,7 @@
  * TODO Renommer en parsewstokentk car parse des tokens séparé par des White
  * Spaces
  */
-var h_parsetk = (function() {
+var h_wordparsertk = (function() {
 	return {
 		
 		/**
