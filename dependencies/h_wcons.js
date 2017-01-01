@@ -641,6 +641,19 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 			// Gestion des évènements clavier.
 			addKeyboadListener(consoleDomElt, consoleIoLine, interpreter, din, doutIoLine, consolePrompt);
 			
+			/**
+			 * NOTE Pour l'exécuter: 
+			 * 1. charger la commande en tapant son nom puis "Entrée"
+			 * 2. exécuter la commande en tapant Ctrl+d
+			 * Puisque pour l'instant c'est Ctrl+d qui déclenche l'exécution. 
+			 */
+			interpreter.addCommand("cleardout", function() {
+				var length = dout.children.length;
+				while (dout.children.length > 1) {
+					dout.removeChild(dout.children[0]);
+				}
+			});
+			
 			return interpreter;
 		}
 	}
