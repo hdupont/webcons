@@ -299,6 +299,7 @@ ns_wcons.IoLine = (function(LineDomView) {
 	
 	function clearChars(self) {
 		self._chars = [];
+		self._firstEditableChar = 0;
 		self._cursorIndex = 0
 	}
 	
@@ -523,12 +524,13 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 			}
 			else if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
 				ioLine.addChar(event.key);
-				interpreter.addToInput(event.key);
 			}
 			else if (keyboard.isEnter(event)) {
 				if (interpreter.hasOneCmdLoaded()) {
 					console.log("One cmd loaded");
+					interpreter.addToInput(ioLine.readUserInput());
 					interpreter.addToInput("\n");
+					console.log("Interpreter input: " + interpreter.inputString());
 					ioLine.moveForward();
 				}
 				else {
