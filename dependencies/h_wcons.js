@@ -1,45 +1,4 @@
 /**
- * Code d'une console web.
- * 
- * La console
- * ----------
- * Une console permet d'exécuter des commandes (Command) tapées sur
- * une ligne de commandes (IoLine) après que l'utilisateur ait appuyé sur la
- * touche "Entrée".
- * Les commandes comprises par la console se trouvent dans une liste
- * (Commands).
- * La console met à disposition de ses commandes la ligne tapée par
- * l'utilisateur (Input) ainsi qu'un moyen de procéder à des affichages
- * (IoLine). 
- * 
- * Les commandes
- * -------------
- * Une commande peut exécuter les instructions mises à sa dispostion dans l'api
- * des commandes (CommandApi).
- * 
- * Les Entrées/Sorties
- * -------------------
- * L'utilisateur tape une suite de caractères sur la ligne de 
- * commande (IoLine) qui délègue l'affichage à sa vue (LineDomView).
- * La ligne de commande est équipée d'un curseur et est éditable, l'utilisateur
- * peut déplacer le curseur et procéder à des ajouts ou des suppression de
- * caractères au niveau du curseur.
- * 
- * Grammaire des commandes
- * -----------------------
- * La grammaire des commandes est données en EBNF à la différence que les
- * non-terminaux sont entre chevrons (<>) comme en BNF.
- * 
- * NOTE 
- * <concmd> ::= <cmd> [<inopt>]
- * <cmd> ::= <name><args>
- * <inopt> ::= "<" " " <insrc>
- * <insrc> ::= "" | "din"
- * <name> ::= l'identificateur d'une commande
- * <args> ::= une suite de token représentant les arguments de la commande
- */
-
-/**
  *  Namespace de la console.
  */
 var ns_wcons = {};
@@ -66,91 +25,11 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 	 * 
 	 * NOTE Une API est créée à chaque appel de commande.
 	 */
-	function CommandApi(cmd, input, ioLine, helpCmd) {
+	function CommandApi(cmd, input, ioLine) {
 		this._cmd = cmd;
 		this._input = input;
 		this._ioLine = ioLine;
-		this._helpCmd = helpCmd;
 	}
-	
-	// Affichage
-	// ---------
-	
-	/**
-	 * Affiche dans la console la chaine passée en paramètre.
-	 * @param {string} str La chaine qu'on souhaite afficher dans la console.
-	 */
-	CommandApi.prototype.print = function(str) {
-		this._ioLine.print(str);
-	};
-
-	CommandApi.prototype.printChar = function(character) {
-		this._ioLine.addChar(character);
-	};
-	
-	CommandApi.prototype.newLine = function() {
-		this._ioLine.moveForward();
-	};
-	
-	/**
-	 * Affiche dans la console la chaine passée en paramètre puis passe à la
-	 * ligne suivante.
-	 * @param {string} str La chaine qu'on souhaite afficher dans la console.
-	 */
-	CommandApi.prototype.println = function(cmdOutput) {
-		this._ioLine.println(cmdOutput);
-	};
-	
-	CommandApi.prototype.printPrompt = function() {
-		this._ioLine.printPrompt(this._cmd.getPrompt());
-	}
-	
-	CommandApi.prototype.printHelp = function() {
-		if (typeof this._helpCmd !== "undefined") {
-			this._helpCmd.executeHandler(this);
-		}
-		else {
-			this._ioLine.println("No help to give :(");
-		}
-	}
-	
-	// Input
-	// -----
-	
-	/**
-	 * Retourne sous la forme d'un objet Input l'entrée utilisateur.
-	 * @returns {Input} L'input correspondant à l'entrée utilisateur.
-	 */
-	CommandApi.prototype.input = function() {
-		return this._input;
-	};
-	
-	/**
-	 * Retourne sous la forme d'une chaine l'entrée utilisateur.
-	 * @returns {String} La chaine correspondant à l'entrée utilisateur.
-	 */
-	CommandApi.prototype.inputString = function() {
-		return this._input.toString();
-	};
-	
-	CommandApi.prototype.args = function() {
-		return this._input;
-	};
-	
-	CommandApi.prototype.cmdName = function() {
-		return this._cmd.getName();
-	}
-	
-	
-	// Terminaison
-	// -----------
-	
-	/**
-	 * Attribut servant à indiquer à l'interpréteur de commande que la commande
-	 * a terminée son exécution.
-	 * NOTE Une commande est quittée avec un "return". 
-	 */
-	CommandApi.prototype.quit = "quit";
 	
 	// Software tools primitives
 	// -------------------------
@@ -183,8 +62,6 @@ ns_wcons.Command = (function(CommandApi, CommandExitException) {
 		this._name = name;
 		this._handler = handler;
 		this._args = null;
-		this._options = null;
-		this._quitted = true;
 	}
 	Command.prototype.getName = function() {
 		return this._name;
@@ -194,37 +71,10 @@ ns_wcons.Command = (function(CommandApi, CommandExitException) {
 		var api = new CommandApi(this, input, ioLine, helpCmd);
 		console.log("Api created for: " +  this.getName());
 		var cmdReturn = this.executeHandler(api);
-		this._quitted = true;
 	};
 	Command.prototype.executeHandler = function(api) {
 		var cmdReturn = this._handler(api);		
 	};
-	Command.prototype.setArgs = function(args) {
-		return this._args = args;
-	};
-	Command.prototype.getIntroduction = function() {
-		return getOption(this, "description");
-	};
-	Command.prototype.quitted = function() {
-		return this._quitted;
-	};
-	
-	function getOption(self, optionName) {
-		var option = null;
-		if (self._options !== null && typeof self._options !== "undefined") {
-			option = self._options[optionName];
-		}
-		else {
-			option = defautOptions(self)[optionName];
-		}
-		return option; 
-	}
-	
-	function defautOptions(self) {
-		return {
-			description: self.getName() + " vous souhaite la bienvenue :)"
-		}; 
-	}
 	
 	return Command;
 })(ns_wcons.CommandApi, ns_wcons.CommandExitException);
@@ -256,18 +106,7 @@ ns_wcons.Commands = (function(Command) {
 		
 		return res;
 	};
-	Commands.prototype.getDefaultCommand = function() {
-		return this.get("wtf");
-	};
-	Commands.prototype.getNamesSorted = function(fun) {
-		var sortedNames = [];
-		this._commands.forEach(function(cmd) {
-			sortedNames.push(cmd.getName());
-		});
-		sortedNames.sort();
-		return sortedNames;
-	};
-	
+
 	return Commands;
 })(ns_wcons.Command);
 
@@ -301,11 +140,9 @@ ns_wcons.LineDomView = (function() {
 		var charElt = buildCharDomElt(c);
 		this._domContainer.insertBefore(charElt, this._cursorElement);
 	};
+	
 	LineDomView.prototype.removeCursor = function(cursorPosition) {
 		this._domContainer.children[cursorPosition].style.backgroundColor = "";
-	};
-	LineDomView.prototype.outputContent = function(content) {
-		this._domContainer.innerHTML = content;
 	};
 	
 	LineDomView.prototype.positionCursor = function(cursorIndex) {
@@ -392,23 +229,19 @@ ns_wcons.IoLine = (function(LineDomView) {
 		}
 		addChar(this, character);
 	};
+	
 	IoLine.prototype.print = function(str) {
-//		clearChars(this);
 		for (var i = 0; i < str.length; i++) {
 			var char = str[i];
 			this.addChar(char);
 		}
 	};
+	
 	IoLine.prototype.printPrompt = function(str) {
 		this.print(str);
 		this._firstEditableChar = this._chars.length;
 	};
-	IoLine.prototype.println = function(str) {
-		if (typeof str !== "undefined" || str === "") {
-			this.print(str);
-		}
-		this.moveForward();
-	};
+	
 	IoLine.prototype.removeChar = function() {
 		if (this._cursorIndex === 0 || this._cursorIndex === this._firstEditableChar) {
 			return;
@@ -662,19 +495,6 @@ ns_wcons.Interpreter = (function(Commands, CommandApi, Input) {
 	}
 	Interpreter.prototype.addCommand = function(name, handler) {
 		this._commands.add(name, handler)
-	};
-	Interpreter.prototype.addHelpCommand = function(name, handler) {
-		this._helpCommands.add(name, handler);
-	};
-	Interpreter.prototype.findSortedCommandsNames = function(name, handler) {
-		var sortedNames = this._commands.getNamesSorted();
-		var names = "";
-		sortedNames.forEach(function(nm) {
-			names +=nm + ", "; 
-		});
-		names = names.substring(0, names.length - 2);
-		
-		return names;
 	};
 	Interpreter.prototype.hasOneCmdLoaded = function() {
 		return this._currentCommand !== null;
