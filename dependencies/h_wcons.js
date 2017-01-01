@@ -155,16 +155,17 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 	// Software tools primitives
 	// -------------------------
 	
-	CommandApi.prototype.getc = function(c) {
-		return this._input.readChar();
+	CommandApi.prototype.getc = function() {
+		return this._input.readCharCode();
 	};
 	
-	CommandApi.prototype.putc = function(c) {
-		this._ioLine.print(c);
+	CommandApi.prototype.putc = function(charCode) {
+		var character = String.fromCharCode(charCode);
+		this._ioLine.print(character);
 	};
 
 	CommandApi.prototype.eof = function(c) {
-		return this._input.isEmpty();
+		return this._input.oefCode();
 	};
 	
 	return CommandApi;
@@ -191,10 +192,9 @@ ns_wcons.Command = (function(CommandApi, CommandExitException) {
 	// L'input qui a déclenché l'appelle et la ligne permettant les affichages.
 	Command.prototype.exec = function(input, ioLine, helpCmd) {
 		var api = new CommandApi(this, input, ioLine, helpCmd);
+		console.log("Api created for: " +  this.getName());
 		var cmdReturn = this.executeHandler(api);
-		if (cmdReturn === api.quit) {
-			this._quitted = true;
-		}
+		this._quitted = true;
 	};
 	Command.prototype.executeHandler = function(api) {
 		var cmdReturn = this._handler(api);		
@@ -567,6 +567,23 @@ ns_wcons.Input = (function(parseTk) {
 		return character;
 	};
 	
+	Input.prototype.oefCode = function() {
+		return -1;
+	};
+	
+	Input.prototype.readCharCode = function() {
+		var charCode = 0;
+		if (this.isEmpty()) {
+			charCode = this.oefCode();
+		}
+		else {
+			var character = this._str[this._index];
+			this._index++;
+			charCode = character.charCodeAt(0);
+		}
+		return charCode;
+	};
+	
 	/**
 	 * Renvoi le contenu d'une ligne (sans le séparateur de ligne).
 	 * NOTE C'est au client de gérer les sauts de ligne.
@@ -641,6 +658,7 @@ ns_wcons.Interpreter = (function(Commands, CommandApi, Input) {
 		this._commands = new Commands();
 		this._helpCommands = new Commands();
 		this._currentCommand = null;
+		this._currentInputStr = null;
 	}
 	Interpreter.prototype.addCommand = function(name, handler) {
 		this._commands.add(name, handler)
@@ -658,66 +676,36 @@ ns_wcons.Interpreter = (function(Commands, CommandApi, Input) {
 		
 		return names;
 	};
-	Interpreter.prototype.eval = function(input, ioLine) {
-		// On lit le nom de la commande et on avance le curseur d'une
-		// ligne.
-		// NOTE On avance le curseur pour que la commande commence ses
-		// affichage sur une ligne vierge. On va lui passer l'ioLine et
-		// elle s'en servira pour afficher ce qu'elle veut.
-		var cmdName = input.readToken();
-		
-		// On essaie de charger une commande. Deux cas:
-		if (cmdName === "help") {
-			// Cas 1. C'est une demande d'aide. Deux cas:
-			
-			var helpTarget = input.readToken();
-			if (helpTarget === "" || helpTarget === "help") {
-				// cas a. C'est l'aide générale.
-				loadedCommand = this._commands.get("help");
-				input = new Input(this.findSortedCommandsNames());
-			}
-			else {
-				// cas b. C'est une aide pour une commande spécifique.
-				loadedCommand = this._helpCommands.get(helpTarget);
-				
-				// On gère le cas où la commande n'a pas d'aide.
-				if (typeof loadedCommand === "undefined" || loadedCommand === null) {
-					// On va exécuter nohelp.
-					loadedCommand = this._commands.get("nohelp");
-				}	
-			}
+	Interpreter.prototype.hasOneCmdLoaded = function() {
+		return this._currentCommand !== null;
+	};
+	Interpreter.prototype.loadCmd = function(cmdName) {
+		var cmd = this._commands.get(cmdName);
+		if (!cmd) {
+			console.log("Unknow command: " + cmdName);
 		}
 		else {
-			// Cas 2. C'est une commande en ligne. On la charge.
-			loadedCommand = this._commands.get(cmdName);
-		}
-
-		// On gère le cas où on n'a pas réussi a charger une commande.
-		if (loadedCommand === null) {
-			// On va exécuter la commande par défaut.
-			loadedCommand = this._commands.getDefaultCommand();
-		}
-		
-		// On gère le cas où la commande chargée est une commande spéciale.
-		if (cmdName === "cmdlist") {
-			input = new Input(this.findSortedCommandsNames());
-		}
-		
-		// On passe ses arguments à la commande et on lui demande de s'exécuter.
-		// NOTE Les arguments de la commande commencent au premier caractère
-		// qui ne soit pas un espace après le nom de la commande.
-		// NOTE La commande gère ses output. Elle prend la main sur la
-		// ioLine pour s'en servire pour afficher ce qu'elle veut.
-		input.skipSpaces(); 
-		loadedCommand.exec(input, ioLine, this._helpCommands.get(cmdName));
-		
-		// On fait ce qu'il faut après que la commande a fini de
-		// s'exécuter.
-		if (loadedCommand.quitted()) {
-			var cmdApi = new CommandApi(null, input, ioLine);
+			this._currentCommand = this._commands.get(cmdName);
+			this._currentInputStr = "";
+			console.log("Command loaded: " + cmdName);
 		}
 	};
-
+	Interpreter.prototype.addToInput = function(str) {
+		this._currentInputStr += str;
+	};
+	Interpreter.prototype.inputString = function() {
+		return this._currentInputStr;
+	};
+	Interpreter.prototype.evalCurrentCmd = function(ioLine) {
+		console.log("Evaluatuing command: " + this._currentCommand.getName());
+		var input = new Input(this._currentInputStr);
+		input.skipSpaces();
+		console.log("White spaces skipped");
+		this._currentCommand.exec(input, ioLine);
+		console.log("Evaluation done.");
+		this._currentCommand = null;
+	};
+	
 	return Interpreter;
 })(ns_wcons.Commands,  ns_wcons.CommandApi, ns_wcons.Input);
 
@@ -753,13 +741,45 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 		domElt.addEventListener("keydown", function(event) {
 			if (keyboard.isEndOfFile(event)) {
 				event.preventDefault();
-				alert("EOF");
+				console.log("EOF");
+				console.log("Interpreter input: " + interpreter.inputString());
+				interpreter.evalCurrentCmd(ioLine);
+				ioLine.printPrompt(prompt);
 			}
 			else if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
 				ioLine.addChar(event.key);
+				interpreter.addToInput(event.key);
 			}
 			else if (keyboard.isEnter(event)) {
-				ioLine.moveForward();
+				if (interpreter.hasOneCmdLoaded()) {
+					console.log("One cmd loaded");
+					interpreter.addToInput("\n");
+					ioLine.moveForward();
+				}
+				else {
+					// NOTE(ioLine) ioLine.moveForward() doit être fait après
+					// ioLine.readUserInput() car ioLine.readUserInput() lit
+					// les caractères de la ligne sur laquelle ioLine pointe.
+					// Si on moveForward alors ioLine pointera sur une ligne
+					// vide et rien ne sera lu.
+					
+					// STEP On tente de charger une commande.
+					console.log("No cmd loaded");
+					var userInputStr = ioLine.readUserInput(); // REF NOTE(ioLine)
+					console.log("User input: '" + userInputStr + "'");
+					var userInput = new Input(userInputStr);
+					var cmdName = userInput.readToken();
+					console.log("Command name: '" + cmdName + "'");
+					interpreter.loadCmd(cmdName);
+					
+					// STEP On passe à la ligne.
+					ioLine.moveForward(); // REF NOTE(ioLine)
+					
+					// STEP En cas d'échec on réaffiche un prompt.
+					if (! interpreter.hasOneCmdLoaded()) {	
+						ioLine.printPrompt(prompt);
+					}
+				}
 			}
 			else if (keyboard.isArrowLeft(event)) {
 				ioLine.moveCursorLeft();
