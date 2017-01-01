@@ -558,10 +558,12 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 					if (! interpreter.hasOneCmdLoaded()) {	
 						ioLine.printPrompt(prompt);
 					}
-					// STEP En cas de succés on détermine si les E/S de la commande proviennent du dom
+					// STEP En cas de succés on détermine si les E/S de la commande proviennent du DOM.
 					else {
 						var dio = userInput.readToken();
-						// STEP Si les E/S provienne du DOM on exécute la commande.
+						// STEP Si les E/S proviennent du DOM on exécute la commande.
+						// NOTE Si les E/S ne proviennent pas du DOM l'exécution de la commande
+						// sera provoquée lorsque l'utilisateur entrera un EndOfFile. 
 						if (dio === "dio") {
 							console.log("dio: Dom IO");
 							interpreter.addToInput(din.value);
