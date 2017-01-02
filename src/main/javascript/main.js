@@ -14,7 +14,6 @@
 	// On ajoute les commandes interactives et leur aide.
 	for (var cmdName in cmds) {
 		cons.addCommand(cmdName, cmds[cmdName]);
-		cons.addHelpCommand(cmdName, cmds.help[cmdName]);
 	}
 
 })(ns_wconsapp.cmds, h_wcons);

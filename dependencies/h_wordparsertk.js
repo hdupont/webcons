@@ -1,11 +1,13 @@
 /**
- * NOTE Ici, les tokens sont séparés par des espaces.
+ * Contient des utilitaires permettant de faciliter le parsing de mots.
+ * 
+ * NOTE Un mot est une suite de caractères "non blanc".
+ * Les mots sont séparés par des blanc.
+ * 
  * NOTE En JavaScript les strings ne sont pas mutable donc on ne définit ici
  * que peek et pas des read.
- * TODO Renommer en parsewstokentk car parse des tokens séparé par des White
- * Spaces
  */
-var h_parsetk = (function() {
+var h_wordparsertk = (function() {
 	return {
 		
 		/**
@@ -58,7 +60,7 @@ var h_parsetk = (function() {
 		 * @returns {int} Retourne l'indice du premier caractère suivant le
 		 * token trouvé à
 		 */
-		skipToken: function(str, start) {
+		skipWord: function(str, start) {
 			if (start > str.length - 1) {
 				return -1;
 			}
@@ -75,7 +77,7 @@ var h_parsetk = (function() {
 		 * recherche.
 		 * @returns {string} Le premier token trouvé à partir de start.
 		 */
-		peekToken: function(str, start) {
+		peekWord: function(str, start) {
 			if (start > str.length - 1) {
 				return "";
 			}
@@ -104,7 +106,7 @@ var h_parsetk = (function() {
 		 * 
 		 * TODO Uniformiser l'interface. Tout le monde commence à 1 ou à zéro.
 		 */
-		findFirstTokenIndex: function(str, index, start) {
+		findFirstWordIndex: function(str, index, start) {
 			if (start > str.length - 1) {
 				return -1;
 			}
@@ -132,23 +134,23 @@ var h_parsetk = (function() {
 		 * Lorem ipsum dolor sit amet
 		 * 01234567890123456789012345 <- indice des caractères (commence à 0)
 		 * 1. Le premier token trouvé à partir du caractère d'indice 7
-		 * findFirstToken: function("Lorem ipsum dolor sit amet", 1, 7)
+		 * findFirstWord: function("Lorem ipsum dolor sit amet", 1, 7)
 		 * => "psum"
 		 * 2. Le deuxième token trouvé à partir du caractère d'indice 7
-		 * findFirstToken: function("Lorem ipsum dolor sit amet", 2, 7)
+		 * findFirstWord: function("Lorem ipsum dolor sit amet", 2, 7)
 		 * => "dolor"
 		 * 
 		 * TODO Uniformiser l'interface. Tout le monde commence à 1 ou à zéro.
 		 */
-		findFirstToken: function(str, index, start) {
+		findFirstWord: function(str, index, start) {
 			if (start > str.length - 1) {
 				return "";
 			}
-			var firstTokenCharIndex = this.findFirstTokenIndex(str, index, start);
+			var firstTokenCharIndex = this.findFirstWordIndex(str, index, start);
 			if (firstTokenCharIndex === -1) {
 				return "";
 			}
-			var token = this.peekToken(str, firstTokenCharIndex);
+			var token = this.peekWord(str, firstTokenCharIndex);
 			return token;
 		}
 	};

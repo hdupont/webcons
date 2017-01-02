@@ -1,45 +1,4 @@
 /**
- * Code d'une console web.
- * 
- * La console
- * ----------
- * Une console permet d'exécuter des commandes (Command) tapées sur
- * une ligne de commandes (IoLine) après que l'utilisateur ait appuyé sur la
- * touche "Entrée".
- * Les commandes comprises par la console se trouvent dans une liste
- * (Commands).
- * La console met à disposition de ses commandes la ligne tapée par
- * l'utilisateur (Input) ainsi qu'un moyen de procéder à des affichages
- * (IoLine). 
- * 
- * Les commandes
- * -------------
- * Une commande peut exécuter les instructions mises à sa dispostion dans l'api
- * des commandes (CommandApi).
- * 
- * Les Entrées/Sorties
- * -------------------
- * L'utilisateur tape une suite de caractères sur la ligne de 
- * commande (IoLine) qui délègue l'affichage à sa vue (LineDomView).
- * La ligne de commande est équipée d'un curseur et est éditable, l'utilisateur
- * peut déplacer le curseur et procéder à des ajouts ou des suppression de
- * caractères au niveau du curseur.
- * 
- * Grammaire des commandes
- * -----------------------
- * La grammaire des commandes est données en EBNF à la différence que les
- * non-terminaux sont entre chevrons (<>) comme en BNF.
- * 
- * NOTE 
- * <concmd> ::= <cmd> [<inopt>]
- * <cmd> ::= <name><args>
- * <inopt> ::= "<" " " <insrc>
- * <insrc> ::= "" | "din"
- * <name> ::= l'identificateur d'une commande
- * <args> ::= une suite de token représentant les arguments de la commande
- */
-
-/**
  *  Namespace de la console.
  */
 var ns_wcons = {};
@@ -66,105 +25,42 @@ ns_wcons.CommandApi = (function(CommandExitException) {
 	 * 
 	 * NOTE Une API est créée à chaque appel de commande.
 	 */
-	function CommandApi(cmd, input, ioLine, helpCmd) {
+	function CommandApi(cmd, input, ioLine) {
 		this._cmd = cmd;
 		this._input = input;
 		this._ioLine = ioLine;
-		this._helpCmd = helpCmd;
 	}
-	
-	// Affichage
-	// ---------
-	
-	/**
-	 * Affiche dans la console la chaine passée en paramètre.
-	 * @param {string} str La chaine qu'on souhaite afficher dans la console.
-	 */
-	CommandApi.prototype.print = function(str) {
-		this._ioLine.print(str);
-	};
-
-	CommandApi.prototype.printChar = function(character) {
-		this._ioLine.addChar(character);
-	};
-	
-	CommandApi.prototype.newLine = function() {
-		this._ioLine.moveForward();
-	};
-	
-	/**
-	 * Affiche dans la console la chaine passée en paramètre puis passe à la
-	 * ligne suivante.
-	 * @param {string} str La chaine qu'on souhaite afficher dans la console.
-	 */
-	CommandApi.prototype.println = function(cmdOutput) {
-		this._ioLine.println(cmdOutput);
-	};
-	
-	CommandApi.prototype.printPrompt = function() {
-		this._ioLine.printPrompt(this._cmd.getPrompt());
-	}
-	
-	CommandApi.prototype.printHelp = function() {
-		if (typeof this._helpCmd !== "undefined") {
-			this._helpCmd.executeHandler(this);
-		}
-		else {
-			this._ioLine.println("No help to give :(");
-		}
-	}
-	
-	// Input
-	// -----
-	
-	/**
-	 * Retourne sous la forme d'un objet Input l'entrée utilisateur.
-	 * @returns {Input} L'input correspondant à l'entrée utilisateur.
-	 */
-	CommandApi.prototype.input = function() {
-		return this._input;
-	};
-	
-	/**
-	 * Retourne sous la forme d'une chaine l'entrée utilisateur.
-	 * @returns {String} La chaine correspondant à l'entrée utilisateur.
-	 */
-	CommandApi.prototype.inputString = function() {
-		return this._input.toString();
-	};
-	
-	CommandApi.prototype.args = function() {
-		return this._input;
-	};
-	
-	CommandApi.prototype.cmdName = function() {
-		return this._cmd.getName();
-	}
-	
-	
-	// Terminaison
-	// -----------
-	
-	/**
-	 * Attribut servant à indiquer à l'interpréteur de commande que la commande
-	 * a terminée son exécution.
-	 * NOTE Une commande est quittée avec un "return". 
-	 */
-	CommandApi.prototype.quit = "quit";
 	
 	// Software tools primitives
 	// -------------------------
 	
-	CommandApi.prototype.getc = function(c) {
-		return this._input.readChar();
+	CommandApi.prototype.getc = function() {
+		return this._input.readCharCode();
 	};
 	
-	CommandApi.prototype.putc = function(c) {
-		this._ioLine.print(c);
+	CommandApi.prototype.putc = function(charCode) {
+		var character = String.fromCharCode(charCode);
+		this._ioLine.print(character);
 	};
 
-	CommandApi.prototype.eof = function(c) {
-		return this._input.isEmpty();
+	CommandApi.prototype.putdec = function(number) {
+		this._ioLine.print("" + number);
+	};
+	
+	CommandApi.prototype.NEWLINE = function() {
+		return 10;
+	};
+	
+	CommandApi.prototype.ENDFILE = function(c) {
+		return this._input.oefCode();
+	};
+	
+	CommandApi.prototype.BLANK = function() {
+		return 32;
+	};
+	
+	CommandApi.prototype.TAB = function() {
+		return 9;
 	};
 	
 	return CommandApi;
@@ -182,8 +78,6 @@ ns_wcons.Command = (function(CommandApi, CommandExitException) {
 		this._name = name;
 		this._handler = handler;
 		this._args = null;
-		this._options = null;
-		this._quitted = true;
 	}
 	Command.prototype.getName = function() {
 		return this._name;
@@ -191,40 +85,12 @@ ns_wcons.Command = (function(CommandApi, CommandExitException) {
 	// L'input qui a déclenché l'appelle et la ligne permettant les affichages.
 	Command.prototype.exec = function(input, ioLine, helpCmd) {
 		var api = new CommandApi(this, input, ioLine, helpCmd);
+		console.log("Api created for: " +  this.getName());
 		var cmdReturn = this.executeHandler(api);
-		if (cmdReturn === api.quit) {
-			this._quitted = true;
-		}
 	};
 	Command.prototype.executeHandler = function(api) {
 		var cmdReturn = this._handler(api);		
 	};
-	Command.prototype.setArgs = function(args) {
-		return this._args = args;
-	};
-	Command.prototype.getIntroduction = function() {
-		return getOption(this, "description");
-	};
-	Command.prototype.quitted = function() {
-		return this._quitted;
-	};
-	
-	function getOption(self, optionName) {
-		var option = null;
-		if (self._options !== null && typeof self._options !== "undefined") {
-			option = self._options[optionName];
-		}
-		else {
-			option = defautOptions(self)[optionName];
-		}
-		return option; 
-	}
-	
-	function defautOptions(self) {
-		return {
-			description: self.getName() + " vous souhaite la bienvenue :)"
-		}; 
-	}
 	
 	return Command;
 })(ns_wcons.CommandApi, ns_wcons.CommandExitException);
@@ -256,18 +122,7 @@ ns_wcons.Commands = (function(Command) {
 		
 		return res;
 	};
-	Commands.prototype.getDefaultCommand = function() {
-		return this.get("wtf");
-	};
-	Commands.prototype.getNamesSorted = function(fun) {
-		var sortedNames = [];
-		this._commands.forEach(function(cmd) {
-			sortedNames.push(cmd.getName());
-		});
-		sortedNames.sort();
-		return sortedNames;
-	};
-	
+
 	return Commands;
 })(ns_wcons.Command);
 
@@ -301,11 +156,9 @@ ns_wcons.LineDomView = (function() {
 		var charElt = buildCharDomElt(c);
 		this._domContainer.insertBefore(charElt, this._cursorElement);
 	};
+	
 	LineDomView.prototype.removeCursor = function(cursorPosition) {
 		this._domContainer.children[cursorPosition].style.backgroundColor = "";
-	};
-	LineDomView.prototype.outputContent = function(content) {
-		this._domContainer.innerHTML = content;
 	};
 	
 	LineDomView.prototype.positionCursor = function(cursorIndex) {
@@ -392,23 +245,19 @@ ns_wcons.IoLine = (function(LineDomView) {
 		}
 		addChar(this, character);
 	};
+	
 	IoLine.prototype.print = function(str) {
-//		clearChars(this);
 		for (var i = 0; i < str.length; i++) {
 			var char = str[i];
 			this.addChar(char);
 		}
 	};
+	
 	IoLine.prototype.printPrompt = function(str) {
 		this.print(str);
 		this._firstEditableChar = this._chars.length;
 	};
-	IoLine.prototype.println = function(str) {
-		if (typeof str !== "undefined" || str === "") {
-			this.print(str);
-		}
-		this.moveForward();
-	};
+	
 	IoLine.prototype.removeChar = function() {
 		if (this._cursorIndex === 0 || this._cursorIndex === this._firstEditableChar) {
 			return;
@@ -466,6 +315,7 @@ ns_wcons.IoLine = (function(LineDomView) {
 	
 	function clearChars(self) {
 		self._chars = [];
+		self._firstEditableChar = 0;
 		self._cursorIndex = 0
 	}
 	
@@ -518,7 +368,6 @@ ns_wcons.Input = (function(parseTk) {
 	function Input(str) {
 		this._str = str;
 		this._index = str.length > 0 ? 0 : -1;
-		this._lastTokenRead = "";
 	}
 	
 	/**
@@ -537,10 +386,10 @@ ns_wcons.Input = (function(parseTk) {
 		if (this.isEmpty()) {
 			return "";
 		}
-		// 1. On récupère le token avec peekToken (qui ne modifie pas la chaine)
-		var token = parseTk.peekToken(this._str, this._index);
-		// 2. On se place après le token avec skipToken
-		var index = parseTk.skipToken(this._str, this._index);
+		// 1. On récupère le token avec peekWord (qui ne modifie pas la chaine)
+		var token = parseTk.peekWord(this._str, this._index);
+		// 2. On se place après le token avec skipWord
+		var index = parseTk.skipWord(this._str, this._index);
 		if (index < 0 || index >= this._str.length) {
 			this._index = -1;
 		}
@@ -548,13 +397,7 @@ ns_wcons.Input = (function(parseTk) {
 			this._index = index;
 		}
 		
-		this._lastTokenRead = token;
-		
-		return this._lastTokenRead;
-	};
-
-	Input.prototype.lastTokenRead = function() {
-		return this._lastTokenRead;
+		return token;
 	};
 	
 	Input.prototype.readChar = function() {
@@ -567,44 +410,23 @@ ns_wcons.Input = (function(parseTk) {
 		return character;
 	};
 	
-	/**
-	 * Renvoi le contenu d'une ligne (sans le séparateur de ligne).
-	 * NOTE C'est au client de gérer les sauts de ligne.
-	 * @returns {string} Le contenu de la ligne lue. 
-	 */
-	Input.prototype.readLine = function() {
-		var str = this.readUntil("\n");
-		
-		// On lit le séparateur de ligne si ce n'est pas la dernière ligne.
-		if (! this.isEmpty()) {
-			this.readChar();
-		}
-		
-		return str;
+	Input.prototype.oefCode = function() {
+		return -1;
 	};
 	
-	/**
-	 * Lit l'input jusqu'au caractère passé en paramètre (non compris)
-	 * NOTE C'est au client de gérer les sauts de ligne.
-	 * @returns {string} Le contenu de la ligne lue. 
-	 */
-	Input.prototype.readUntil = function(stopChar) {
-		var line = "";
-		while (! this.isEmpty()) {
-			c = this.readChar();
-			if (c === stopChar) {
-				// On remet le caractère à sa place et on s'en va.
-				this._index--;
-				break;
-			}
-			else {
-				line += c;
-			}
+	Input.prototype.readCharCode = function() {
+		var charCode = 0;
+		if (this.isEmpty()) {
+			charCode = this.oefCode();
 		}
-		
-		return line;
+		else {
+			var character = this._str[this._index];
+			this._index++;
+			charCode = character.charCodeAt(0);
+		}
+		return charCode;
 	};
-	
+		
 	Input.prototype.isEmpty = function() {
 		var res = false;
 		if (this._str === "") {
@@ -633,7 +455,7 @@ ns_wcons.Input = (function(parseTk) {
 	};
 
 	return Input;
-})(h_parsetk);
+})(h_wordparsertk);
 
 ns_wcons.Interpreter = (function(Commands, CommandApi, Input) {
 	
@@ -641,83 +463,44 @@ ns_wcons.Interpreter = (function(Commands, CommandApi, Input) {
 		this._commands = new Commands();
 		this._helpCommands = new Commands();
 		this._currentCommand = null;
+		this._currentInputStr = null;
 	}
 	Interpreter.prototype.addCommand = function(name, handler) {
 		this._commands.add(name, handler)
 	};
-	Interpreter.prototype.addHelpCommand = function(name, handler) {
-		this._helpCommands.add(name, handler);
+	Interpreter.prototype.hasOneCmdLoaded = function() {
+		return this._currentCommand !== null;
 	};
-	Interpreter.prototype.findSortedCommandsNames = function(name, handler) {
-		var sortedNames = this._commands.getNamesSorted();
-		var names = "";
-		sortedNames.forEach(function(nm) {
-			names +=nm + ", "; 
-		});
-		names = names.substring(0, names.length - 2);
-		
-		return names;
-	};
-	Interpreter.prototype.eval = function(input, ioLine) {
-		// On lit le nom de la commande et on avance le curseur d'une
-		// ligne.
-		// NOTE On avance le curseur pour que la commande commence ses
-		// affichage sur une ligne vierge. On va lui passer l'ioLine et
-		// elle s'en servira pour afficher ce qu'elle veut.
-		var cmdName = input.readToken();
-		
-		// On essaie de charger une commande. Deux cas:
-		if (cmdName === "help") {
-			// Cas 1. C'est une demande d'aide. Deux cas:
-			
-			var helpTarget = input.readToken();
-			if (helpTarget === "" || helpTarget === "help") {
-				// cas a. C'est l'aide générale.
-				loadedCommand = this._commands.get("help");
-				input = new Input(this.findSortedCommandsNames());
-			}
-			else {
-				// cas b. C'est une aide pour une commande spécifique.
-				loadedCommand = this._helpCommands.get(helpTarget);
-				
-				// On gère le cas où la commande n'a pas d'aide.
-				if (typeof loadedCommand === "undefined" || loadedCommand === null) {
-					// On va exécuter nohelp.
-					loadedCommand = this._commands.get("nohelp");
-				}	
-			}
+	Interpreter.prototype.loadCmd = function(cmdName) {
+		var cmd = this._commands.get(cmdName);
+		if (!cmd) {
+			console.log("Unknow command: " + cmdName);
 		}
 		else {
-			// Cas 2. C'est une commande en ligne. On la charge.
-			loadedCommand = this._commands.get(cmdName);
-		}
-
-		// On gère le cas où on n'a pas réussi a charger une commande.
-		if (loadedCommand === null) {
-			// On va exécuter la commande par défaut.
-			loadedCommand = this._commands.getDefaultCommand();
-		}
-		
-		// On gère le cas où la commande chargée est une commande spéciale.
-		if (cmdName === "cmdlist") {
-			input = new Input(this.findSortedCommandsNames());
-		}
-		
-		// On passe ses arguments à la commande et on lui demande de s'exécuter.
-		// NOTE Les arguments de la commande commencent au premier caractère
-		// qui ne soit pas un espace après le nom de la commande.
-		// NOTE La commande gère ses output. Elle prend la main sur la
-		// ioLine pour s'en servire pour afficher ce qu'elle veut.
-		input.skipSpaces(); 
-		loadedCommand.exec(input, ioLine, this._helpCommands.get(cmdName));
-		
-		// On fait ce qu'il faut après que la commande a fini de
-		// s'exécuter.
-		if (loadedCommand.quitted()) {
-			var cmdApi = new CommandApi(null, input, ioLine);
+			this._currentCommand = this._commands.get(cmdName);
+			this._currentInputStr = "";
+			console.log("Command loaded: " + cmdName);
 		}
 	};
-
+	Interpreter.prototype.addToInput = function(str) {
+		this._currentInputStr += str;
+	};
+	Interpreter.prototype.inputString = function() {
+		return this._currentInputStr;
+	};
+	Interpreter.prototype.setOutput = function(output) {
+		this._output = output;
+	};
+	Interpreter.prototype.evalCurrentCmd = function() {
+		console.log("Evaluatuing command: " + this._currentCommand.getName());
+		var input = new Input(this._currentInputStr);
+		input.skipSpaces();
+		console.log("White spaces skipped");
+		this._currentCommand.exec(input, this._output);
+		console.log("Evaluation done.");
+		this._currentCommand = null;
+	};
+	
 	return Interpreter;
 })(ns_wcons.Commands,  ns_wcons.CommandApi, ns_wcons.Input);
 
@@ -727,8 +510,8 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 		
 		function addIntro(domElt) {
 			var helpNode = document.createElement("div");
-			helpNode.innerHTML = "Tapez cmdlist pour avoir la liste des commandes comprises par la console.<br />" +
-				"Tapez help suivi du nom d'une commande pour avoir de l'aide sur cette commande.";
+			helpNode.innerHTML = "For now you can use 'cleardout' and the software tools.<br />" +
+				"For more information, take a look at the source code.";
 			domElt.appendChild(helpNode);
 		}
 		
@@ -744,43 +527,67 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 		outputElt.style.height = "20em";
 		outputElt.style.overflow = "scroll";
 		
-		addIntro(outputElt)
+		addIntro(outputElt);
 		
 		return outputElt;
 	}
 	
 	function addKeyboadListener(domElt, ioLine, interpreter, din, doutIoLine, prompt) {
 		domElt.addEventListener("keydown", function(event) {
-			if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
+			if (keyboard.isEndOfFile(event)) {
+				event.preventDefault();
+				console.log("EOF");
+				console.log("Interpreter input: " + interpreter.inputString());
+				interpreter.evalCurrentCmd();
+				ioLine.printPrompt(prompt);
+			}
+			else if (keyboard.isVisibleChar(event) || keyboard.isSpace(event)) {
 				ioLine.addChar(event.key);
 			}
 			else if (keyboard.isEnter(event)) {
-				var errorMessage = "";
-				try {
-					// On détermine les E/S de la commande à exécuter.
-					var io = findIo(ioLine, din, doutIoLine);
-					
-					// On passe sur une nouvelle ligne où la commande
-					// commencera ses affichages.
-					// NOTE Le passage à la ligne doit s'effectuer apèrs la
-					// lecture des E/S car les options d'E/S sont lues sur la
-					// ligne pointée par ioLine. Si on passe à la ligne avant
-					// ioLine pointera sur une ligne vide et il n'y aura rien à
-					// lire.
+				if (interpreter.hasOneCmdLoaded()) {
+					console.log("One cmd loaded");
+					interpreter.addToInput(ioLine.readUserInput());
+					interpreter.addToInput("\n");
+					console.log("Interpreter input: " + interpreter.inputString());
 					ioLine.moveForward();
+				}
+				else {
+					// NOTE(ioLine) ioLine.moveForward() doit être fait après
+					// ioLine.readUserInput() car ioLine.readUserInput() lit
+					// les caractères de la ligne sur laquelle ioLine pointe.
+					// Si on moveForward alors ioLine pointera sur une ligne
+					// vide et rien ne sera lu.
 					
-					// On exécute la commande qui lira ses entrées depuis
-					// io.input et affichera ses sorties sur io.output.
-					interpreter.eval(io.input, io.output);	
-				}
-				catch(e) {
-					ioLine.moveForward();
-					ioLine.println(e.message);
-				}
-				finally {
-					// On réaffiche le prompt.
-					ioLine.printPrompt(prompt);
-					ioLine.scrollIntoTheView();
+					// STEP On tente de charger une commande.
+					console.log("No cmd loaded");
+					var userInputStr = ioLine.readUserInput(); // REF NOTE(ioLine)
+					console.log("User input: '" + userInputStr + "'");
+					var userInput = new Input(userInputStr);
+					var cmdName = userInput.readToken();
+					console.log("Command name: '" + cmdName + "'");
+					interpreter.loadCmd(cmdName);
+					interpreter.setOutput(ioLine);
+					ioLine.moveForward(); // REF NOTE(ioLine)
+					
+					// STEP En cas d'échec on réaffiche un prompt.
+					if (! interpreter.hasOneCmdLoaded()) {	
+						ioLine.printPrompt(prompt);
+					}
+					// STEP En cas de succés on détermine si les E/S de la commande proviennent du DOM.
+					else {
+						var dio = userInput.readToken();
+						// STEP Si les E/S proviennent du DOM on exécute la commande.
+						// NOTE Si les E/S ne proviennent pas du DOM l'exécution de la commande
+						// sera provoquée lorsque l'utilisateur entrera un EndOfFile. 
+						if (dio === "dio") {
+							console.log("dio: Dom IO");
+							interpreter.addToInput(din.value);
+							interpreter.setOutput(doutIoLine);
+							interpreter.evalCurrentCmd();
+							ioLine.printPrompt(prompt);
+						}
+					}
 				}
 			}
 			else if (keyboard.isArrowLeft(event)) {
@@ -801,143 +608,6 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 				ioLine.moveCursorToBeginning();
 			}
 		});
-	}
-	
-	/**
-	 * Lit l'entrée utilisateur sur la ligne de commande, c'est-à-dire à la
-	 * position courante de l'ioLine et détermine les Entrées/Sorties de la
-	 * commande à exécuter en fonction des options indiquées par l'utilisateur..
-	 * NOTE Les entrées peuvent provenir directement de la ligne de commande
-	 * et/ou du DOM.
-	 * NOTE Les entrées peuvent s'effectuer dans la console ou dans le DOM.
-	 * NOTE din = dom input.
-	 * NOTE dout = dom output.
-	 * @param {IoLine} ioLine L'objet permettant d'effectuer les E/S.
-	 * @param {HTMLElement} din L'entrée qui lit depuis le DOM.
-	 * @param {IoLine} doutIoLine La sortie qui écrir sur le DOM.
-	 * @returns {Input} L'entrée utilisateur utilisable par l'interpréteur
-	 * de commande.
-	 */
-	function findIo(ioLine, din, doutIoLine) {
-		var io = {input: null, output: null};
-		var interpreterInputStr = "";
-		var userInputStr = ioLine.readUserInput();
-		var tmpInput = new Input(userInputStr);
-		h_log.debug("findIo - tmpInput.toString(): " + tmpInput.toString());
-		var firstToken = tmpInput.readToken();
-		
-		// On détermine l'entrée de l'interpréteur.
-		// NOTE L'entrée peut provenir de la ligne du commande ou du DOM ou des
-		// deux.
-		
-		// NOTE "<" marque le début des options d'IO.
-		// NOTE ">" marque le début des options d'Output.
-		if (firstToken === "<") {
-			// Cas 1. On lit toute la ligne de commande depuis la source
-			// indiquée après le "<".
-			
-			// On lit le nom de la source de la ligne de commande.
-			// NOTE Pour l'instant la seule source est "din"
-			tmpInput.readToken();
-			// ASSERT Soit le token suivant est ">", soit c'est fini.
-			
-			// On valorise interpreterInputStr
-			interpreterInputStr = din.value;
-			
-			h_log.info("findIo - Everything from the DOM");
-		}
-		else {
-			// Cas 2. On lit la commande depuit le prompt. Il faut déterminer
-			// la source des arguements de la commande.
-			var cmdName = firstToken;
-			h_log.info("findIo - cmd: " + cmdName);
-			
-			// On détermine la source des arguements de la commande.
-			var cmdArgsSrc = null;
-			var secondToken = tmpInput.readToken();
-			if (secondToken === "<") {
-				// Cas 2.1. La source des arguments de la commande est
-				// indiquée après le "<"
-				
-				// On lit le nom de la source des argument de la commande.
-				// NOTE En pratique, pour l'instant on supprime le token "din"
-				// de l'input
-				var dinToken = tmpInput.readToken();
-				if (dinToken !== "din") {
-					throw new Error("findIo - din token expected.");
-				}
-				// ASSERT Soit le token suivant est ">", soit c'est fini.
-				
-				cmdArgsSrc = din.value;
-				h_log.info("findIo - Args from the DOM.");
-			}
-			else if (secondToken === ">") {
-				// Cas 2.2. La commande ne prend pas d'argument.
-				cmdArgsSrc = "";
-			}
-			else {
-				// Cas 2.3. La source est indiquée après le nom de la commande,
-				// c'est secondToken et ce qui le suit jusqu'à un éventuel ">".
-				var cmdArgsSrc = secondToken;
-				var currentToken = null;
-				while((currentToken = tmpInput.readToken()) !== ">" && ! tmpInput.isEmpty()) {
-					cmdArgsSrc += " " + currentToken;
-				}
-				// ASSERT Soit le token suivant est ">", soit c'est fini.
-				
-				h_log.info("findIo - Args from the prompt, cmdArgsSrc:" + cmdArgsSrc);
-			}
-			
-			interpreterInputStr = cmdName + " " + cmdArgsSrc;
-		}
-		
-		// On détermine la sortie de l'interpréteur.
-		// NOTE La sortie peut s'effectuer dans la console ou dans le DOM.
-		
-		var output = null;
-		var outputMarkToken = null;
-		if (tmpInput.lastTokenRead() === ">") {
-			// Cas 1. On vient du cas où la commande ne prend pas d'arguments.
-			outputMarkToken = tmpInput.lastTokenRead();
-			h_log.debug("findIo - cmd with no args.");
-		}
-		else {
-			// Cas 1. On vient du cas où la commande prend des arguments.
-			outputMarkToken = tmpInput.readToken();
-			h_log.debug("findIo - cmd with args.");
-		}
-		h_log.debug("findIo - outputMarkToken: " + outputMarkToken);
-		if (outputMarkToken && outputMarkToken === ">") {
-			// Cas 1. La destination de la sortie de la commande est
-			// indiquée après le ">"
-			
-			// On lit le nom de la destination de la sortie de la commande.
-			// NOTE En pratique, pour l'instant on supprime le token "dout"
-			// de l'input
-			var doutToken = tmpInput.readToken();
-			if (doutToken !== "dout") {
-				throw new Error("findIo - dout token expected.");
-			}
-			// ASSERT Il n'y a plus de token dans l'input.
-			
-			output = doutIoLine;
-			h_log.info("findIo - Output to the DOM.");
-		}
-		else {
-			// Cas 2. La destination de la sortie de la commande est
-			// la console.
-			output = ioLine;
-			h_log.info("findIo - Output to the console.");
-		}
-		// ASSERT tmpInput ne contient plus de token
-		h_assert.assert(tmpInput.readToken() === "", "findIo - input should be empty.");
-		
-		var io = {
-				input: new Input(interpreterInputStr),
-				output: output
-		}
-		
-		return io;
 	}
 	
 	return {
@@ -970,6 +640,19 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 			
 			// Gestion des évènements clavier.
 			addKeyboadListener(consoleDomElt, consoleIoLine, interpreter, din, doutIoLine, consolePrompt);
+			
+			/**
+			 * NOTE Pour l'exécuter: 
+			 * 1. charger la commande en tapant son nom puis "Entrée"
+			 * 2. exécuter la commande en tapant Ctrl+d
+			 * Puisque pour l'instant c'est Ctrl+d qui déclenche l'exécution. 
+			 */
+			interpreter.addCommand("cleardout", function() {
+				var length = dout.children.length;
+				while (dout.children.length > 1) {
+					dout.removeChild(dout.children[0]);
+				}
+			});
 			
 			return interpreter;
 		}
