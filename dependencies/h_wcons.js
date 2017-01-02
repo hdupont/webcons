@@ -510,8 +510,9 @@ var h_wcons = (function(IoLine, DomOutput, Interpreter, keyboard, Input) {
 		
 		function addIntro(domElt) {
 			var helpNode = document.createElement("div");
-			helpNode.innerHTML = "For now you can use 'cleardout' and the software tools.<br />" +
-				"For more information, take a look at the source code.";
+			helpNode.innerHTML = "Commands: 'cleardout' and the software tools.<br />" +
+				"I/O : Console I/O or DOM I/O (with argument dio).<br />" +
+				"Help: take a look at the source code.";
 			domElt.appendChild(helpNode);
 		}
 		
